@@ -4,18 +4,34 @@ import { AuthShell, PrimaryButton, SuccessCard } from "@/components/onboarding";
 export const Route = createFileRoute("/registro/validacion-exitosa")({
   head: () => ({
     meta: [
-      { title: "Correo validado — Molipay" },
+      { title: "Correo validado — Jaika" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: () => {
-    const nav = useNavigate();
-    return (
-      <AuthShell leftEyebrow="Paso 2 · Verificacion" leftTitle="Tu correo quedo verificado." step="Cuenta habilitada">
-        <SuccessCard title="Validacion exitosa" body={<p>Tu correo electronico ha sido validado con exito.</p>}>
-          <PrimaryButton onClick={() => nav({ to: "/login", search: { register: undefined } })}>Ir a inicio de sesion</PrimaryButton>
-        </SuccessCard>
-      </AuthShell>
-    );
-  },
+  component: ValidacionExitosa,
 });
+
+function ValidacionExitosa() {
+  const nav = useNavigate();
+  return (
+    <AuthShell
+      leftEyebrow="Paso 2 · Verificación"
+      leftTitle="Tu correo quedó verificado."
+      step="Correo validado"
+    >
+      <SuccessCard
+        title="Validación exitosa"
+        body={
+          <p>
+            Tu correo electrónico fue validado. Ahora completa tu perfil de solicitante para
+            continuar con la verificación de identidad.
+          </p>
+        }
+      >
+        <PrimaryButton onClick={() => nav({ to: "/onboarding/datos-personales" })}>
+          Continuar con el alta
+        </PrimaryButton>
+      </SuccessCard>
+    </AuthShell>
+  );
+}

@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -37,7 +38,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -81,14 +82,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MoliPay — Plataforma de pagos digitales" },
-      { name: "description", content: "Soluciones financieras digitales para empresas, consorcios y administradores. Operamos bajo normativa BCRA." },
-      { name: "author", content: "MoliPay" },
-      { property: "og:title", content: "MoliPay — Plataforma de pagos digitales" },
-      { property: "og:description", content: "Soluciones financieras digitales para empresas, consorcios y administradores." },
+      { title: "Jaika — Créditos respaldados por fideicomiso" },
+      { name: "description", content: "Jaika otorga créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios. Con tu 10% de inicial, tu crédito está preaprobado." },
+      { name: "author", content: "Jaika" },
+      { property: "og:title", content: "Jaika — Créditos respaldados por fideicomiso" },
+      { property: "og:description", content: "Créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios." },
       { property: "og:type", content: "website" },
-      { name: "twitter:title", content: "MoliPay — Plataforma de pagos digitales" },
-      { name: "twitter:description", content: "Soluciones financieras digitales para empresas, consorcios y administradores." },
+      { name: "twitter:title", content: "Jaika — Créditos respaldados por fideicomiso" },
+      { name: "twitter:description", content: "Créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios." },
       { property: "og:image", content: ogImageSrc },
       { property: "og:image:width", content: "1166" },
       { property: "og:image:height", content: "552" },

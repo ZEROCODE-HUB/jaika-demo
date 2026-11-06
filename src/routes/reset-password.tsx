@@ -6,7 +6,7 @@ import { getAuthErrorMessage, requireSupabase } from "@/lib/supabase";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Restablecer contraseña — MoliPay" },
+      { title: "Restablecer contraseña — Jaika" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -42,8 +42,8 @@ function ResetPassword() {
           const r = await sb.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
           err = r.error;
         } else if (access) {
-          const r = await sb.auth.getSessionFromUrl();
-          err = r.error;
+          const r = await sb.auth.getSession();
+          err = r.error ?? (r.data.session ? null : new Error("No se pudo leer la sesión del enlace."));
         } else {
           setMode("error");
           setErrMsg("El enlace de recuperación no es válido o le faltan parámetros.");
@@ -83,9 +83,9 @@ function ResetPassword() {
 
   return (
     <AuthShell
-      leftEyebrow="MoliPay · Acceso"
-      leftTitle="Tu plataforma de pagos, sin intermediarios."
-      leftBody="MoliPay opera bajo normativa BCRA. Tus datos viajan cifrados y se almacenan bajo los estándares del sistema financiero argentino."
+      leftEyebrow="Jaika · Acceso"
+      leftTitle="Tu crédito respaldado por fideicomiso."
+      leftBody="Con tu 10% de inicial, tu crédito está preaprobado. Tu información viaja cifrada y se usa solo para gestionar tu solicitud."
     >
       {mode === "loading" && (
         <SuccessCard variant="loading" title="Validando tu enlace…" body={<p>Un momento por favor.</p>} />
@@ -95,16 +95,16 @@ function ResetPassword() {
         <SuccessCard
           variant="error"
           title="Enlace no válido"
-          body={<p>{errMsg} Solicitá uno nuevo para continuar.</p>}
+          body={<p>{errMsg} Solicita uno nuevo para continuar.</p>}
         >
-          <PrimaryButton onClick={() => nav({ to: "/recuperar" })}>Solicitar nuevo enlace</PrimaryButton>
+          <PrimaryButton onClick={() => nav({ to: "/recuperar", search: { email: "" } })}>Solicitar nuevo enlace</PrimaryButton>
         </SuccessCard>
       )}
 
       {mode === "done" && (
         <SuccessCard
           title="Contraseña actualizada"
-          body={<p>Tu contraseña se cambió correctamente. Ya podés iniciar sesión con la nueva.</p>}
+          body={<p>Tu contraseña se cambió correctamente. Ya puedes iniciar sesión con la nueva.</p>}
         >
           <PrimaryButton onClick={() => nav({ to: "/login", search: { register: undefined } })}>
             Iniciar sesión
@@ -116,8 +116,8 @@ function ResetPassword() {
         <>
           <FormTitle
             eyebrow="Nueva contraseña"
-            title="Creá tu nueva contraseña"
-            subtitle="Elegí una contraseña segura que no hayas utilizado antes."
+            title="Crea tu nueva contraseña"
+            subtitle="Elige una contraseña segura que no hayas utilizado antes."
           />
           <form className="space-y-4" onSubmit={submit}>
             <PasswordField label="Nueva contraseña" value={pw} onChange={setPw} showRules />

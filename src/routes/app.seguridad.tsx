@@ -1,421 +1,326 @@
-﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Smartphone, Key, Monitor, CheckCircle2, Plus, Trash2, Mail, QrCode } from "lucide-react";
-import { PageHeader, Card, Input, Label, BtnPrimary, BtnOutline, Badge } from "@/components/portal-shell";
-import { FormDialog } from "@/components/form-dialog";
+import {
+  CheckCircle2,
+  KeyRound,
+  Laptop,
+  LockKeyhole,
+  Mail,
+  Monitor,
+  ShieldCheck,
+  Smartphone,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
-import { requireSupabase } from "@/lib/supabase";
-import { SecurityActivityCard } from "@/components/security-activity-card";
+import {
+  Badge,
+  BtnOutline,
+  BtnPrimary,
+  Card,
+  Input,
+  Label,
+  PageHeader,
+} from "@/components/portal-shell";
+import {
+  ETAPA_LABEL,
+  ETAPA_TONE,
+  fechaEtapa,
+  paisPorNombre,
+  useJaikaDemo,
+} from "@/lib/jaika-demo-store";
 
-export const Route = createFileRoute("/app/seguridad")({ component: Page });
+export const Route = createFileRoute("/app/seguridad")({ component: SeguridadPage });
 
+type Sesion = {
+  id: string;
+  dispositivo: string;
+  ubicacion: string;
+  detalle: string;
+  actual: boolean;
+  icono: typeof Monitor;
+};
 
-const initialTeam = [
-  { n: "Carla Rivas", e: "carla@empresademo.com", r: "Owner", a: "Activa" },
-  { n: "Diego Mendez", e: "diego@empresademo.com", r: "Operador", a: "Activa" },
-  { n: "Sofia Lopez", e: "sofia@empresademo.com", r: "Solo lectura", a: "Pendiente" },
-];
+function fechaActividad(iso: string) {
+  return new Intl.DateTimeFormat("es", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
 
-function Page() {
-  const navigate = useNavigate();
-  const [twoFa, setTwoFa] = useState<"email" | "totp">("email");
-  const [sesionTiempo, setSesionTiempo] = useState("Nunca");
-  const [customTiempo, setCustomTiempo] = useState("");
-
-  const [sessions, setSessions] = useState([
-    { d: "Chrome · MacBook Pro", l: "Buenos Aires, AR", ip: "190.12.44.21", f: "Activa ahora", curr: true },
-    { d: "Safari · iPhone 14", l: "Buenos Aires, AR", ip: "190.12.44.21", f: "Hace 2 horas", curr: false },
-    { d: "Firefox · Windows", l: "Cordoba, AR", ip: "200.40.18.92", f: "Hace 3 dias", curr: false },
+function SeguridadPage() {
+  const { perfil, etapa, notificaciones } = useJaikaDemo();
+  const pais = paisPorNombre(perfil.paisPostula);
+  const [actual, setActual] = useState("");
+  const [nueva, setNueva] = useState("");
+  const [repetir, setRepetir] = useState("");
+  const [metodo, setMetodo] = useState<"email" | "app">("email");
+  const [dosPasos, setDosPasos] = useState(false);
+  const [sesiones, setSesiones] = useState<Sesion[]>([
+    {
+      id: "actual",
+      dispositivo: "Chrome · Windows",
+      ubicacion: pais.nombre,
+      detalle: "Sesión actual",
+      actual: true,
+      icono: Monitor,
+    },
+    {
+      id: "movil",
+      dispositivo: "Safari · iPhone",
+      ubicacion: pais.nombre,
+      detalle: "Última actividad hace 2 horas",
+      actual: false,
+      icono: Smartphone,
+    },
+    {
+      id: "laptop",
+      dispositivo: "Edge · Laptop",
+      ubicacion: pais.nombre,
+      detalle: "Última actividad hace 3 días",
+      actual: false,
+      icono: Laptop,
+    },
   ]);
 
-  const [pw, setPw] = useState({ actual: "", nueva: "", repetir: "" });
-  const [savingPw, setSavingPw] = useState(false);
-  const [enroll, setEnroll] = useState<{ factorId: string; qr: string; secret: string } | null>(null);
-  const [verifyCode, setVerifyCode] = useState("");
-  const [team, setTeam] = useState(initialTeam);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteName, setInviteName] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("Operador");
+  const actividad = notificaciones.slice(0, 5);
+  const fechaPreaprobacion = fechaEtapa(notificaciones, "preaprobado");
 
-  const cambiarPassword = async () => {
-    if (!pw.actual || !pw.nueva || !pw.repetir) { toast.error("Completá todos los campos"); return; }
-    if (pw.nueva.length < 12) { toast.error("Mínimo 12 caracteres"); return; }
-    if (pw.nueva !== pw.repetir) { toast.error("Las contraseñas no coinciden"); return; }
-    setSavingPw(true);
-    try {
-      const sb = requireSupabase();
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user?.email) throw new Error("Sesión inválida");
-      const { error: reErr } = await sb.auth.signInWithPassword({ email: user.email, password: pw.actual });
-      if (reErr) throw new Error("La contraseña actual es incorrecta");
-      const { error } = await sb.auth.updateUser({ password: pw.nueva });
-      if (error) throw error;
-      toast.success("Contraseña actualizada correctamente");
-      setPw({ actual: "", nueva: "", repetir: "" });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo cambiar la contraseña");
-    } finally {
-      setSavingPw(false);
-    }
-  };
-
-  const guardar2FA = async () => {
-    try {
-      const sb = requireSupabase();
-      if (twoFa === "totp") {
-        const { data, error } = await sb.auth.mfa.enroll({ factorType: "totp" });
-        if (error) throw error;
-        setEnroll({ factorId: data.id, qr: data.totp.qr_code_svg ?? "", secret: data.totp.secret });
-        toast.success("Escanea el QR y verifica el código para activar TOTP");
-      } else {
-        toast.success("Método 2FA por email configurado");
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo configurar 2FA");
-    }
-  };
-
-  const verificarTOTP = async () => {
-    if (!enroll) return;
-    try {
-      const sb = requireSupabase();
-      const { data: chal, error: cErr } = await sb.auth.mfa.challenge({ factorId: enroll.factorId });
-      if (cErr) throw cErr;
-      const { error } = await sb.auth.mfa.verify({ factorId: enroll.factorId, challengeId: chal.id, code: verifyCode });
-      if (error) throw error;
-      toast.success("2FA TOTP activado correctamente");
-      setEnroll(null);
-      setVerifyCode("");
-    } catch {
-      toast.error("Código inválido o verificación fallida");
-    }
-  };
-
-  const cerrarSesion = async (i: number) => {
-    setSessions((p) => p.filter((_, j) => j !== i));
-    if (sessions[i]?.curr) {
-      try { await requireSupabase().auth.signOut(); } catch { /* noop */ }
-      navigate({ to: "/login" });
-    } else {
-      toast.success("Sesión cerrada");
-    }
-  };
-
-  const cerrarTodas = async () => {
-    try {
-      await requireSupabase().auth.signOut({ scope: "global" });
-      toast.success("Todas las sesiones fueron cerradas");
-      navigate({ to: "/login" });
-    } catch {
-      toast.error("No se pudieron cerrar las sesiones");
-    }
-  };
-
-  const handleInvitar = async () => {
-    const email = inviteEmail.trim().toLowerCase();
-    const nombre = inviteName.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error("Ingresá un email válido");
+  const cambiarPassword = () => {
+    if (!actual || !nueva || !repetir) {
+      toast.error("Completa todos los campos.");
       return;
     }
-    if (team.some((m) => m.e.toLowerCase() === email)) {
-      toast.error("Ese email ya es miembro del equipo");
+    if (nueva.length < 10) {
+      toast.error("La nueva contraseña debe tener al menos 10 caracteres.");
       return;
     }
-    if (!nombre) {
-      toast.error("Ingresá el nombre del miembro");
+    if (nueva !== repetir) {
+      toast.error("Las contraseñas no coinciden.");
       return;
     }
-    // Intento de envío real si Supabase está configurado (magic link como invitación)
-    try {
-      const sb = requireSupabase();
-      // No requiere admin: envía OTP/magic link que sirve como invitación
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
-      });
-      if (error) throw error;
-    } catch {
-      // Fallback silencioso: igual se registra localmente y se notifica
-    }
-    setTeam((prev) => [...prev, { n: nombre, e: email, r: inviteRole, a: "Pendiente" }]);
-    toast.success(`Invitación enviada a ${email}`);
-    setInviteOpen(false);
-    setInviteName("");
-    setInviteEmail("");
-    setInviteRole("Operador");
+    setActual("");
+    setNueva("");
+    setRepetir("");
+    toast.success("Contraseña actualizada (simulación).");
+  };
+
+  const alternarDosPasos = () => {
+    const activar = !dosPasos;
+    setDosPasos(activar);
+    toast.success(
+      activar
+        ? `Verificación en dos pasos activada por ${metodo === "email" ? "correo" : "aplicación"}.`
+        : "Verificación en dos pasos desactivada.",
+    );
+  };
+
+  const cerrarOtrasSesiones = () => {
+    const otras = sesiones.length - 1;
+    setSesiones((lista) => lista.filter((sesion) => sesion.actual));
+    toast.success(
+      otras > 0 ? "Cerraste las demás sesiones." : "No hay otras sesiones activas.",
+    );
   };
 
   return (
     <>
       <PageHeader
         title="Seguridad"
-        description="Contrasena, 2FA, sesiones activas, equipo y auditoria."
+        description="Protege tu cuenta y revisa los accesos recientes."
+        action={<Badge tone={ETAPA_TONE[etapa]}>{ETAPA_LABEL[etapa]}</Badge>}
       />
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        <Card>
-          <h3 className="font-semibold mb-4 flex items-center gap-2"><Key size={16} /> Cambiar contrasena</h3>
-          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); cambiarPassword(); }}>
-            <div><Label>Contrasena actual</Label><Input type="password" value={pw.actual} onChange={(e) => setPw((p) => ({ ...p, actual: e.target.value }))} /></div>
-            <div><Label>Nueva contrasena</Label><Input type="password" value={pw.nueva} onChange={(e) => setPw((p) => ({ ...p, nueva: e.target.value }))} /></div>
-            <div><Label>Repetir contrasena</Label><Input type="password" value={pw.repetir} onChange={(e) => setPw((p) => ({ ...p, repetir: e.target.value }))} /></div>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={11} className="text-emerald-600" /> Minimo 12 caracteres</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={11} className="text-emerald-600" /> Mayusculas, numeros y simbolos</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 size={11} className="text-muted-foreground" /> Distinta a las ultimas 5 usadas</div>
-            </div>
-            <BtnPrimary type="submit" disabled={savingPw}>{savingPw ? "Actualizando..." : "Actualizar contrasena"}</BtnPrimary>
-          </form>
-        </Card>
-
-        <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-4">
           <Card>
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <h3 className="font-semibold flex items-center gap-2 min-w-0">
-                <Smartphone size={16} className="shrink-0" /> <span className="truncate">Doble factor (2FA)</span>
-              </h3>
-              <Badge tone="success">Activo</Badge>
+            <div className="flex items-center gap-2">
+              <KeyRound size={18} className="text-jaika-gold-dark" />
+              <h2 className="font-semibold text-black-800">Contraseña</h2>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Elegi el metodo de verificacion en dos pasos que preferis usar al iniciar sesion desde un dispositivo nuevo.
+            <p className="mt-1 text-sm text-black-400">
+              Usa una contraseña larga y diferente a la de otros servicios.
             </p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <Label htmlFor="password-actual">Contraseña actual</Label>
+                <Input
+                  id="password-actual"
+                  type="password"
+                  value={actual}
+                  onChange={(event) => setActual(event.target.value)}
+                  autoComplete="current-password"
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="password-nueva">Nueva contraseña</Label>
+                  <Input
+                    id="password-nueva"
+                    type="password"
+                    value={nueva}
+                    onChange={(event) => setNueva(event.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password-repetir">Repetir contraseña</Label>
+                  <Input
+                    id="password-repetir"
+                    type="password"
+                    value={repetir}
+                    onChange={(event) => setRepetir(event.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+              <BtnPrimary onClick={cambiarPassword}>
+                Actualizar contraseña <LockKeyhole size={14} />
+              </BtnPrimary>
+            </div>
+          </Card>
 
-            <div className="grid sm:grid-cols-2 gap-2 mt-4">
+          <Card>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={18} className="text-jaika-gold-dark" />
+                <h2 className="font-semibold text-black-800">Verificación en dos pasos</h2>
+              </div>
+              <Badge tone={dosPasos ? "success" : "neutral"}>
+                {dosPasos ? "Activa" : "Inactiva"}
+              </Badge>
+            </div>
+            <p className="mt-1 text-sm text-black-400">
+              Agrega una capa extra de seguridad al iniciar sesión.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => setTwoFa("email")}
-                className={`text-left border rounded-lg p-3 transition ${
-                  twoFa === "email"
-                    ? "border-primary bg-[color:var(--brand-soft)]"
-                    : "hover:border-primary/50 bg-card"
+                onClick={() => setMetodo("email")}
+                className={`flex items-start gap-3 rounded-sm border p-3 text-left ${
+                  metodo === "email"
+                    ? "border-jaika-gold bg-jaika-gold/10"
+                    : "border-black-100 hover:border-black-200"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <Mail size={16} className="text-primary shrink-0" />
-                  <span className="font-semibold text-sm">Codigo por email</span>
-                  {twoFa === "email" && <Badge tone="success">Activo</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enviamos un codigo de 8 digitos a tu correo corporativo.
-                </p>
+                <Mail size={18} className="mt-0.5 text-jaika-gold-dark" />
+                <span>
+                  <span className="block text-sm font-semibold text-black-800">Correo</span>
+                  <span className="mt-0.5 block text-xs text-black-400">
+                    {perfil.email || "Tu correo registrado"}
+                  </span>
+                </span>
               </button>
-
               <button
                 type="button"
-                onClick={() => setTwoFa("totp")}
-                className={`text-left border rounded-lg p-3 transition ${
-                  twoFa === "totp"
-                    ? "border-primary bg-[color:var(--brand-soft)]"
-                    : "hover:border-primary/50 bg-card"
+                onClick={() => setMetodo("app")}
+                className={`flex items-start gap-3 rounded-sm border p-3 text-left ${
+                  metodo === "app"
+                    ? "border-jaika-gold bg-jaika-gold/10"
+                    : "border-black-100 hover:border-black-200"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <QrCode size={16} className="text-primary shrink-0" />
-                  <span className="font-semibold text-sm">Google Authenticator</span>
-                  {twoFa === "totp" && <Badge tone="success">Activo</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Codigo TOTP de 6 digitos generado en tu app (Google / 1Password / Authy).
-                </p>
+                <Smartphone size={18} className="mt-0.5 text-jaika-gold-dark" />
+                <span>
+                  <span className="block text-sm font-semibold text-black-800">Aplicación</span>
+                  <span className="mt-0.5 block text-xs text-black-400">
+                    Código de 6 dígitos
+                  </span>
+                </span>
               </button>
             </div>
+            <div className="mt-4">
+              <BtnOutline onClick={alternarDosPasos}>
+                {dosPasos ? "Desactivar" : "Activar"} verificación en dos pasos
+              </BtnOutline>
+            </div>
+          </Card>
+        </div>
 
-            {twoFa === "totp" && (
-              <div className="mt-4 border rounded-lg p-4 bg-muted/40">
-                <div className="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)] gap-4 items-start">
-                  <div className="w-32 h-32 rounded-md bg-white border grid place-items-center shrink-0">
-                    <QrCode size={96} strokeWidth={1} className="text-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground">Escanea el QR con Google Authenticator</div>
-                    <div className="text-[11px] text-muted-foreground mt-1">O ingresa manualmente la clave:</div>
-                    <div className="font-mono text-xs mt-1 p-2 bg-card border rounded break-all">
-                      JBSWY3DPEHPK3PXP-MOLLY-EMPRESA-DEMO
+        <div className="space-y-4">
+          <Card>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-black-800">Sesiones activas</h2>
+                <p className="mt-1 text-xs text-black-400">
+                  {sesiones.length} {sesiones.length === 1 ? "sesión" : "sesiones"}
+                </p>
+              </div>
+              {sesiones.length > 1 && (
+                <BtnOutline onClick={cerrarOtrasSesiones} className="h-8 px-2.5 text-[11px]">
+                  <Trash2 size={12} /> Cerrar otras
+                </BtnOutline>
+              )}
+            </div>
+            <div className="mt-4 space-y-3">
+              {sesiones.map((sesion) => {
+                const Icono = sesion.icono;
+                return (
+                  <div key={sesion.id} className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-plata-100 text-black-500">
+                      <Icono size={16} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium text-black-800">
+                          {sesion.dispositivo}
+                        </span>
+                        {sesion.actual && (
+                          <span className="rounded-full bg-success-bg px-2 py-0.5 text-[10px] font-semibold text-success">
+                            Actual
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-black-400">
+                        {sesion.ubicacion} · {sesion.detalle}
+                      </p>
                     </div>
-                    <div className="mt-3">
-                      <Label>Codigo de verificacion</Label>
-                      <Input placeholder="123 456" inputMode="numeric" maxLength={6} />
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="font-semibold text-black-800">Actividad reciente</h2>
+            {actividad.length === 0 ? (
+              <p className="mt-3 text-sm text-black-400">
+                Aún no hay movimientos registrados en tu cuenta.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {actividad.map((item) => (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-bg text-success">
+                      <CheckCircle2 size={13} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-black-700">{item.titulo}</p>
+                      <p className="text-[11px] text-black-400">
+                        {fechaActividad(item.fecha)}
+                      </p>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             )}
-
-            <div className="flex gap-2 mt-4">
-              <BtnPrimary className="flex-1" onClick={guardar2FA}>
-                Guardar metodo 2FA
-              </BtnPrimary>
-              <BtnOutline onClick={() => toast.success("Codigos de respaldo enviados a tu correo")}>Codigos de respaldo</BtnOutline>
-            </div>
-
-            {enroll && (
-              <div className="mt-4 border rounded-lg p-4 bg-muted/40">
-                <div className="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)] gap-4 items-start">
-                  <div className="w-32 h-32 rounded-md bg-white border grid place-items-center shrink-0"
-                    dangerouslySetInnerHTML={{ __html: enroll.qr || "" }}
-                  />
-                  <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground">Escanea el QR con Google Authenticator</div>
-                    <div className="text-[11px] text-muted-foreground mt-1">O ingresa manualmente la clave:</div>
-                    <div className="font-mono text-xs mt-1 p-2 bg-card border rounded break-all">{enroll.secret}</div>
-                    <div className="mt-3">
-                      <Label>Codigo de verificacion</Label>
-                      <Input value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} placeholder="123 456" inputMode="numeric" maxLength={6} />
-                    </div>
-                    <BtnPrimary className="mt-3 w-full" onClick={verificarTOTP}>Activar 2FA</BtnPrimary>
-                  </div>
-                </div>
-              </div>
+            {fechaPreaprobacion && (
+              <p className="mt-4 border-t border-black-100 pt-3 text-[11px] text-black-400">
+                Crédito preaprobado el {fechaActividad(fechaPreaprobacion)}.
+              </p>
             )}
           </Card>
 
-
-
+          <div className="rounded-sm border border-black-100 bg-plata-50 p-4 text-[11px] leading-relaxed text-black-400">
+            <p className="font-semibold text-black-600">Recomendaciones</p>
+            <p className="mt-1">
+              No compartas tus claves. Jaika nunca te pedirá tu contraseña por correo ni por
+              teléfono.
+            </p>
+          </div>
         </div>
       </div>
-
-      <div className="grid lg:grid-cols-[1fr_1fr] gap-6 mb-6">
-        <Card>
-          <h3 className="font-semibold mb-3 flex items-center gap-2"><Monitor size={16} /> Sesiones activas</h3>
-          <div className="mb-5 pb-5 border-b">
-            <div className="text-xs text-muted-foreground mb-2">
-              Tiempo de sesion activa: la sesion se cerrara automaticamente despues del periodo de inactividad.
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {["Nunca", "30 minutos", "1 hora", "6 horas", "1 dia"].map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => { setSesionTiempo(opt === "Nunca" ? "" : opt); setCustomTiempo(""); }}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md border transition ${
-                    sesionTiempo === opt
-                      ? "border-primary bg-[color:var(--brand-soft)] text-primary"
-                      : "border-border hover:border-primary/50 bg-card text-muted-foreground"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setSesionTiempo("custom")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md border transition flex items-center gap-1 ${
-                  sesionTiempo === "custom"
-                    ? "border-primary bg-[color:var(--brand-soft)] text-primary"
-                    : "border-border hover:border-primary/50 bg-card text-muted-foreground"
-                }`}
-              >
-                Custom
-              </button>
-            </div>
-            {sesionTiempo === "custom" && (
-              <div className="flex items-center gap-2 mt-2">
-                <Input
-                  value={customTiempo}
-                  onChange={(e) => setCustomTiempo(e.target.value)}
-                  placeholder="Minutos"
-                  className="h-9 w-28 text-sm"
-                  type="number"
-                  min={1}
-                />
-                <span className="text-xs text-muted-foreground">minutos</span>
-                <BtnOutline
-                  className="h-9 px-3 text-xs"
-                  onClick={() => {
-                    if (!customTiempo || Number(customTiempo) < 1) { toast.error("Ingresa un tiempo valido"); return; }
-                    toast.success(`Tiempo de sesion: ${customTiempo} minutos`);
-                  }}
-                >
-                  Aplicar
-                </BtnOutline>
-              </div>
-            )}
-            {sesionTiempo && sesionTiempo !== "custom" && sesionTiempo !== "" && (
-              <p className="text-[11px] text-emerald-700 mt-1.5">
-                Tiempo de sesion configurado: {sesionTiempo}
-              </p>
-            )}
-            {sesionTiempo === "" && (
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                La sesion no expirara por inactividad.
-              </p>
-            )}
-          </div>
-          <div className="divide-y">
-            {sessions.map((s, i) => (
-              <div key={i} className="flex items-center justify-between py-3">
-                <div>
-                  <div className="text-sm font-semibold flex items-center gap-2">
-                    {s.d} {s.curr && <Badge tone="success">Actual</Badge>}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{s.l} · {s.ip} · {s.f}</div>
-                </div>
-                {!s.curr && (
-                  <button onClick={() => cerrarSesion(i)} className="text-xs text-red-600 font-semibold flex items-center gap-1"><Trash2 size={12} /> Cerrar</button>
-                )}
-              </div>
-            ))}
-          </div>
-          <BtnOutline className="w-full mt-3" onClick={cerrarTodas}>Cerrar todas las sesiones</BtnOutline>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Usuarios del equipo</h3>
-            <BtnOutline className="h-9 px-3 text-xs" onClick={() => setInviteOpen(true)}><Plus size={12} /> Invitar</BtnOutline>
-          </div>
-          <div className="divide-y">
-            {team.map((u) => (
-              <div key={u.e} className="flex items-center justify-between py-3">
-                <div>
-                  <div className="text-sm font-semibold">{u.n}</div>
-                  <div className="text-xs text-muted-foreground">{u.e}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge tone="neutral">{u.r}</Badge>
-                  <Badge tone={u.a === "Activa" ? "success" : "warn"}>{u.a}</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      <SecurityActivityCard />
-
-      <FormDialog
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        title="Invitar miembro del equipo"
-        description="Enviá una invitación por email para que se una a tu empresa."
-        submitLabel="Enviar invitación"
-        onSubmit={handleInvitar}
-      >
-        <div>
-          <Label>Nombre completo</Label>
-          <Input placeholder="Ej. Juan Pérez" value={inviteName} onChange={(e) => setInviteName(e.target.value)} autoFocus />
-        </div>
-        <div>
-          <Label>Email</Label>
-          <Input type="email" placeholder="juan@empresa.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
-        </div>
-        <div>
-          <Label>Rol</Label>
-          <select
-            className="w-full h-10 px-3 rounded-md border bg-card text-sm"
-            value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value)}
-          >
-            <option>Owner</option>
-            <option>Operador</option>
-            <option>Solo lectura</option>
-            <option>Admin</option>
-          </select>
-          <p className="text-[11px] text-muted-foreground mt-1">El invitado quedará en estado Pendiente hasta aceptar.</p>
-        </div>
-      </FormDialog>
     </>
   );
 }

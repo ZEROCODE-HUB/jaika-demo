@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode, type InputHTMLAttributes } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, Eye, EyeOff, UploadCloud, Camera, FileText, X, ShieldCheck, Loader2 } from "lucide-react";
-import { MollyLogo } from "@/components/molly-logo";
+import { JaikaLogo } from "@/components/jaika-logo";
 import loginBg from "@/assets/login-hero.jpg";
 
 /* ============ AuthShell (split-screen) ============ */
 
 export function AuthShell({
   children,
-  leftEyebrow = "MoliPay · Onboarding",
-  leftTitle = "Tus datos están protegidos bajo normativa BCRA",
+  leftEyebrow = "Jaika · Onboarding",
+  leftTitle = "Tu crédito respaldado por fideicomiso",
   leftBody,
   step,
 }: {
@@ -31,13 +31,13 @@ export function AuthShell({
         <div className="relative z-10">
           <Link to="/" className="inline-flex">
             <span className="bg-white rounded-sm px-3.5 py-2 shadow-sm">
-              <MollyLogo size={30} />
+              <JaikaLogo size={30} />
             </span>
           </Link>
           <div className="mt-12">
             <div className="flex items-center gap-2 mb-6">
-              <span className="w-6 h-px bg-red-400/60" />
-              <span className="font-sans text-[0.65rem] tracking-[0.25em] uppercase text-red-400/80">
+              <span className="w-6 h-px bg-jaika-gold/70" />
+              <span className="font-sans text-[0.65rem] tracking-[0.25em] uppercase text-jaika-gold">
                 {leftEyebrow}
               </span>
             </div>
@@ -53,10 +53,10 @@ export function AuthShell({
         </div>
 
         <div className="relative z-10 space-y-5">
-          <div className="inline-flex items-center gap-2.5 px-3 py-2 border border-red-400/30 rounded-sm bg-red-500/5 backdrop-blur">
-            <ShieldCheck size={13} strokeWidth={1.5} className="text-red-400" />
-            <span className="font-sans text-[0.65rem] tracking-[0.1em] uppercase text-red-400">
-              Registrado ante BCRA
+          <div className="inline-flex items-center gap-2.5 px-3 py-2 border border-jaika-gold/30 rounded-sm bg-jaika-gold/5 backdrop-blur">
+            <ShieldCheck size={13} strokeWidth={1.5} className="text-jaika-gold" />
+            <span className="font-sans text-[0.65rem] tracking-[0.1em] uppercase text-jaika-gold">
+              Datos protegidos
             </span>
           </div>
           {step && (
@@ -64,7 +64,7 @@ export function AuthShell({
               {step}
             </p>
           )}
-          <p className="text-white/35 text-[11px]">© {new Date().getFullYear()} MoliPay</p>
+          <p className="text-white/35 text-[11px]">© {new Date().getFullYear()} Jaika</p>
         </div>
       </aside>
 
@@ -72,7 +72,7 @@ export function AuthShell({
         <div className="lg:hidden px-6 py-4 flex items-center justify-between bg-black text-white">
           <Link to="/" className="inline-flex items-center gap-2">
             <span className="bg-white rounded-sm px-2.5 py-1.5">
-              <MollyLogo size={24} />
+              <JaikaLogo size={24} />
             </span>
           </Link>
         </div>
@@ -82,10 +82,7 @@ export function AuthShell({
         </div>
 
         <footer className="px-6 py-4 text-center text-xs text-black-400">
-          ¿Necesitás ayuda?{" "}
-          <a href="mailto:soporte@molipay.com.ar" className="underline underline-offset-2 hover:text-red-500 transition-colors">
-            soporte@molipay.com.ar
-          </a>
+          ¿Necesitas ayuda? Nuestro equipo te acompaña en cada paso.
         </footer>
       </main>
     </div>
@@ -107,7 +104,7 @@ export function Stepper({ steps, current }: { steps: string[]; current: number }
                 done
                   ? "bg-success text-white"
                   : active
-                  ? "bg-red-500 text-white"
+                  ? "bg-jaika-gold text-[#1c2e4a]"
                   : "bg-transparent text-black-600 border border-black-200"
               }`}
             >
@@ -130,7 +127,7 @@ export function FormTitle({ eyebrow, title, subtitle }: { eyebrow?: string; titl
   return (
     <div className="mb-7">
       {eyebrow && (
-        <p className="mb-2 font-sans text-[0.7rem] tracking-[0.2em] uppercase text-red-500">
+        <p className="mb-2 font-sans text-[0.7rem] tracking-[0.2em] uppercase text-jaika-gold-dark">
           {eyebrow}
         </p>
       )}
@@ -175,7 +172,7 @@ export function SelectField({
   onChange,
   options,
   error,
-  placeholder = "Seleccioná…",
+  placeholder = "Selecciona…",
 }: {
   label: string;
   value: string;
@@ -295,8 +292,10 @@ export function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={`w-full h-11 rounded-sm text-white text-sm font-semibold tracking-wide transition-all duration-150 ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-red-400 active:bg-red-700"
-      } bg-red-500 ${className}`}
+        disabled
+          ? "opacity-40 cursor-not-allowed"
+          : "hover:bg-jaika-gold-dark hover:text-white active:bg-jaika-gold-dark"
+      } bg-jaika-gold text-[#1c2e4a] ${className}`}
     >
       {children}
     </button>
@@ -307,16 +306,18 @@ export function SecondaryButton({
   children,
   onClick,
   type = "button",
+  className = "",
 }: {
   children: ReactNode;
   onClick?: () => void;
   type?: "button" | "submit";
+  className?: string;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
-      className="h-11 px-5 rounded-sm text-sm font-semibold transition-colors border border-black-200 text-black-700 hover:bg-black-50"
+      className={`h-11 px-5 rounded-sm text-sm font-semibold transition-colors border border-black-200 text-black-700 hover:bg-black-50 ${className}`}
     >
       {children}
     </button>
@@ -405,20 +406,20 @@ export function FileUpload({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm truncate text-black-700">{isImage ? "Imagen cargada" : "Documento cargado"} {isExisting && <span className="text-[10px] text-black-400">(existente)</span>}</p>
-            <p className="text-[11px] text-black-400">{isExisting ? "Se mantendrá si no la reemplazás" : "Listo para enviar"}</p>
+            <p className="text-[11px] text-black-400">{isExisting ? "Se mantendrá si no la reemplazas" : "Listo para enviar"}</p>
             <p className="text-[11px] text-black-400 truncate">{value.name}</p>
           </div>
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="text-xs font-semibold text-black-700 hover:text-red-500 transition-colors"
+            className="text-xs font-semibold text-black-700 hover:text-jaika-gold-dark transition-colors"
           >
             Reemplazar
           </button>
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="text-black-400 hover:text-red-500"
+            className="text-black-400 hover:text-jaika-gold-dark"
             aria-label="Quitar"
           >
             <X size={16} />
@@ -439,15 +440,15 @@ export function FileUpload({
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files?.[0] ?? null); }}
         className={`w-full flex flex-col items-center justify-center gap-2 py-8 px-4 text-center transition-colors rounded-sm ${
-          drag ? "border-red-500 bg-red-50/20" : "border-black-200 bg-white"
+          drag ? "border-jaika-gold bg-jaika-gold/5" : "border-black-200 bg-white"
         } border-dashed border`}
       >
-        <div className="w-10 h-10 flex items-center justify-center bg-black text-red-400 rounded-full">
+        <div className="w-10 h-10 flex items-center justify-center bg-[#1c2e4a] text-jaika-gold rounded-full">
           <Camera size={18} />
         </div>
         <span className="text-sm font-semibold text-black-700">
           <UploadCloud size={14} className="inline mr-1" />
-          Arrastrá o hacé clic para subir
+          Arrastra o haz clic para subir
         </span>
         {hint && <span className="text-xs text-black-400">{hint}</span>}
         <span className="text-[10px] text-black-300 uppercase tracking-wider">JPG · PNG · PDF · máx 8MB</span>

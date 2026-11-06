@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type DemoRole = "empresa";
+export type DemoRole = "cliente";
 
 type DemoCtx = {
   role: DemoRole | null;
@@ -18,15 +18,15 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const r = localStorage.getItem("molly_role") as DemoRole | null;
-    if (r === "empresa") setRoleState(r);
+    const r = localStorage.getItem("jaika_role") as DemoRole | null;
+    if (r === "cliente") setRoleState(r);
   }, []);
 
   const setRole = (r: DemoRole | null) => {
     setRoleState(r);
     if (typeof window !== "undefined") {
-      if (r) localStorage.setItem("molly_role", r);
-      else localStorage.removeItem("molly_role");
+      if (r) localStorage.setItem("jaika_role", r);
+      else localStorage.removeItem("jaika_role");
     }
     setHidden(false);
   };

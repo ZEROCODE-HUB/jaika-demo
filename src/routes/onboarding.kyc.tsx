@@ -1,241 +1,251 @@
-﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import {
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+  ScanFace,
+  ShieldCheck,
+} from "lucide-react";
 import {
   AuthShell,
   Field,
   FileUpload,
   FormTitle,
+  PrimaryButton,
+  SecondaryButton,
   SelectField,
   Stepper,
   WizardNav,
 } from "@/components/onboarding";
-import { PROVINCIAS, useOnboarding, type FileRef } from "@/lib/onboarding-store";
-import { submitOnboarding, fileToB64 } from "@/lib/api/onboarding";
-import { getSignedDocUrls, requireSupabase } from "@/lib/supabase";
+import { useOnboarding, type FileRef } from "@/lib/onboarding-store";
+import { PAISES, paisPorNombre, useJaikaDemo } from "@/lib/jaika-demo-store";
 
 export const Route = createFileRoute("/onboarding/kyc")({
   head: () => ({
     meta: [
-      { title: "Validacion KYC — Molipay" },
+      { title: "Verificación de identidad — Jaika" },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: KycWizard,
 });
 
-const STEPS = ["DNI", "Servicio", "Selfie", "Residencia"];
+const STEPS = ["Documento", "Verificación facial", "Residencia"];
+
+type FaceState = "pendiente" | "verificando" | "verificado";
 
 function KycWizard() {
   const nav = useNavigate();
-  const store = useOnboarding();
-  const { kyc, setKyc } = store;
+  const { perfil, completarIdentidad } = useJaikaDemo();
   const [step, setStep] = useState(0);
-  const [files, setFiles] = useState<{ dniFrente: FileRef; dniDorso: FileRef; servicio: FileRef; selfie: FileRef }>({
-    dniFrente: null,
-    dniDorso: null,
-    servicio: null,
-    selfie: null,
-  });
-  const [loadingDocs, setLoadingDocs] = useState(true);
+  const [files, setFiles] = useState<{
+    frente: FileRef;
+    dorso: FileRef;
+    selfie: FileRef;
+  }>({ frente: null, dorso: null, selfie: null });
+  const [faceState, setFaceState] = useState<FaceState>(
+    perfil.verificadoFacial ? "verificado" : "pendiente",
+  );
   const [addr, setAddr] = useState({
-    direccion: kyc.direccion ?? "",
-    direccion2: kyc.direccion2 ?? "",
-    ciudad: kyc.ciudad ?? "",
-    provincia: kyc.provincia ?? "",
-    cp: kyc.cp ?? "",
+    direccion: perfil.direccion ?? "",
+    ciudad: perfil.ciudad ?? "",
+    paisResidencia: perfil.paisResidencia || perfil.paisPostula || "Perú",
   });
   const [err, setErr] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Prefill: si ya envió onboarding, cargar documentos existentes y dirección
+  const pais = paisPorNombre(perfil.paisPostula);
+  const esPasaporte = perfil.tipoDocumento === "Pasaporte";
+  const tipoDocumento = perfil.tipoDocumento ?? "documento";
+
   useEffect(() => {
-    (async () => {
-      try {
-        const sb = requireSupabase();
-        const { data: u } = await sb.auth.getUser();
-        const mail = u.user?.email;
-        if (!mail) { setLoadingDocs(false); return; }
-        const { data: cli } = await sb.from("clientes").select("legajo, direccion, direccion2, ciudad, provincia, cp").eq("correo", mail).maybeSingle();
-        if (!cli) { setLoadingDocs(false); return; }
-        // Prefill dirección desde DB si existe
-        if ((cli as any).direccion) setAddr((a) => ({ ...a, direccion: (cli as any).direccion ?? a.direccion, direccion2: (cli as any).direccion2 ?? a.direccion2, ciudad: (cli as any).ciudad ?? a.ciudad, provincia: (cli as any).provincia ?? a.provincia, cp: (cli as any).cp ?? a.cp }));
-        const { data: docs } = await sb.from("documentos").select("tipo, url, label").eq("cliente_legajo", (cli as any).legajo);
-        if (!docs || docs.length === 0) { setLoadingDocs(false); return; }
-        const urls = await getSignedDocUrls(docs.map((d: any) => d.url));
-        const tipoMap: Record<string, keyof typeof files> = { id_frente: "dniFrente", id_dorso: "dniDorso", servicio: "servicio", selfie: "selfie" };
-        const next: typeof files = { dniFrente: null, dniDorso: null, servicio: null, selfie: null };
-        for (const d of docs as any[]) {
-          const key = tipoMap[d.tipo];
-          if (!key) continue;
-          const signed = urls[d.url];
-          // FileUpload espera {name, url}; sin file significa ya cargado
-          next[key] = { name: d.label || d.url.split("/").pop() || d.tipo, url: signed ?? undefined } as FileRef;
-        }
-        setFiles((prev) => ({ dniFrente: next.dniFrente ?? prev.dniFrente, dniDorso: next.dniDorso ?? prev.dniDorso, servicio: next.servicio ?? prev.servicio, selfie: next.selfie ?? prev.selfie }));
-      } catch { /* ignore */ } finally { setLoadingDocs(false); }
-    })();
-  }, []);
+    if (faceState !== "verificando") return;
+    const timer = window.setTimeout(() => setFaceState("verificado"), 2200);
+    return () => window.clearTimeout(timer);
+  }, [faceState]);
 
   const canNext =
-    (step === 0 && files.dniFrente && files.dniDorso) ||
-    (step === 1 && files.servicio) ||
-    (step === 2 && files.selfie) ||
-    step === 3;
+    (step === 0 && !!files.frente && (esPasaporte || !!files.dorso)) ||
+    (step === 1 && faceState === "verificado") ||
+    step === 2;
 
-  const finish = async () => {
+  const finish = () => {
     const e: Record<string, string> = {};
-    if (!addr.direccion.trim()) e.direccion = "Requerido";
-    if (!addr.ciudad.trim()) e.ciudad = "Requerido";
-    if (!addr.provincia) e.provincia = "Requerido";
-    if (!addr.cp.trim()) e.cp = "Requerido";
+    if (!addr.direccion.trim()) e.direccion = "Ingresa tu dirección";
+    if (!addr.ciudad.trim()) e.ciudad = "Ingresa tu ciudad";
+    if (!addr.paisResidencia) e.paisResidencia = "Selecciona tu país";
     setErr(e);
     if (Object.keys(e).length) return;
-    setKyc(addr);
 
-    // Leer el estado fresco del store (no la referencia estancada de la última renderización)
-    let { tipoCuenta, registro, datosPersonales, datosEmpresa } = useOnboarding.getState();
-    // Fallback si el store perdió datos (ej: login directo sin pasar por registro)
-    if (!registro.email || !tipoCuenta) {
-      try {
-        const { requireSupabase } = await import("@/lib/supabase");
-        const sb = requireSupabase();
-        const { data: u } = await sb.auth.getUser();
-        const mail = u.user?.email ?? "";
-        if (mail && !registro.email) registro = { ...registro, email: mail };
-        if (!tipoCuenta) {
-          const metaTipo = (u.user?.user_metadata as any)?.tipoCuenta as string | undefined;
-          if (metaTipo === "juridica" || metaTipo === "fisica") tipoCuenta = metaTipo as any;
-          else {
-            const { data: cli } = await sb.from("clientes").select("tipo_persona").eq("correo", mail).maybeSingle();
-            if ((cli as any)?.tipo_persona) tipoCuenta = (cli as any).tipo_persona === "juridica" ? "juridica" : "fisica";
-          }
-        }
-      } catch { /* ignore fallback */ }
-    }
-    const perfil: Record<string, unknown> = {
-      direccion: addr.direccion,
-      direccion2: addr.direccion2,
-      ciudad: addr.ciudad,
-      provincia: addr.provincia,
-      cp: addr.cp,
-      fechaNacimiento: (registro as any).fechaNac ?? null,
-    };
-    let cuit: string;
-    if (tipoCuenta === "juridica") {
-      cuit = datosEmpresa.cuit ?? "";
-      perfil.tipoSociedad = datosEmpresa.tipoId;
-      perfil.nombreLegal = datosEmpresa.nombreLegal;
-      perfil.nombreFantasia = datosEmpresa.nombreFantasia;
-      perfil.fechaInscripcion = datosEmpresa.fechaInscripcion;
-    } else {
-      cuit = datosPersonales.cuitCuil ?? "";
-      perfil.genero = datosPersonales.genero;
-      perfil.cuitCuil = datosPersonales.cuitCuil;
-      perfil.ocupacion = datosPersonales.ocupacion;
-      perfil.origenFondos = datosPersonales.origenFondos;
-      perfil.esPEP = datosPersonales.esPEP;
-    }
+    completarIdentidad({
+      direccion: addr.direccion.trim(),
+      ciudad: addr.ciudad.trim(),
+      paisResidencia: addr.paisResidencia,
+      verificadoFacial: true,
+    });
 
-    const kycB64: Record<string, { name: string; type: string; data: string } | null> = {};
-    for (const key of ["dniFrente", "dniDorso", "servicio", "selfie"] as const) {
-      const f = files[key];
-      kycB64[key] = f?.file ? await fileToB64(f.file) : null;
-    }
+    useOnboarding.getState().setKyc({
+      dniFrente: files.frente,
+      dniDorso: files.dorso,
+      selfie: files.selfie,
+      direccion: addr.direccion.trim(),
+      ciudad: addr.ciudad.trim(),
+    });
 
-    const nombre =
-      tipoCuenta === "juridica"
-        ? datosEmpresa.nombreLegal || registro.nombre
-        : `${registro.nombre} ${registro.apellido}`.trim();
-
-    try {
-      setSubmitting(true);
-      setSubmitError(null);
-      await submitOnboarding({
-        email: registro.email ?? "",
-        tipoCuenta: tipoCuenta as "fisica" | "juridica",
-        nombre: nombre ?? "",
-        cuit,
-        perfil,
-        kyc: kycB64,
-      });
-      nav({ to: "/onboarding/en-proceso" });
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Error al enviar el alta");
-    } finally {
-      setSubmitting(false);
-    }
+    nav({ to: "/onboarding/en-proceso" });
   };
 
   return (
     <AuthShell
-      leftEyebrow="Paso 5 · Verificacion de identidad"
+      leftEyebrow="Paso 4 · Verificación de identidad"
       leftTitle="Validamos tu identidad de forma segura."
-      leftBody="Tus documentos se procesan en un entorno cifrado y se conservan segun normativa BCRA y Ley 25.246."
-      step={`Paso ${step + 1} de 4`}
+      leftBody="Tu documento y tu rostro se usan únicamente para confirmar tu identidad dentro de la solicitud."
+      step={`Paso ${step + 1} de 3`}
     >
-      <FormTitle eyebrow="KYC · Documentacion" title="Validacion KYC" />
+      <FormTitle
+        eyebrow="KYC · Identidad"
+        title="Verificación de identidad"
+        subtitle="Completa los tres pasos para continuar con tu solicitud."
+      />
       <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-black-800">Cargá el DNI frente y dorso</h2>
+          <h2 className="text-lg font-semibold text-black-800">
+            {esPasaporte
+              ? "Carga la página principal de tu pasaporte"
+              : `Carga el frente y el dorso de tu ${tipoDocumento.toLowerCase()}`}
+          </h2>
+          <p className="text-xs leading-relaxed text-black-400">
+            Asegúrate de que el documento se vea completo, legible y sin reflejos.
+          </p>
           <FileUpload
-            label="DNI frente"
-            value={files.dniFrente}
-            onChange={(v) => setFiles({ ...files, dniFrente: v })}
+            label={esPasaporte ? "Página principal" : "Frente del documento"}
+            hint={`${tipoDocumento} · imagen o PDF`}
+            value={files.frente}
+            onChange={(v) => setFiles({ ...files, frente: v })}
           />
-          <FileUpload
-            label="DNI dorso"
-            value={files.dniDorso}
-            onChange={(v) => setFiles({ ...files, dniDorso: v })}
+          {!esPasaporte && (
+            <FileUpload
+              label="Dorso del documento"
+              hint={`${tipoDocumento} · imagen o PDF`}
+              value={files.dorso}
+              onChange={(v) => setFiles({ ...files, dorso: v })}
+            />
+          )}
+          <WizardNav
+            onNext={() => setStep(1)}
+            nextDisabled={!canNext}
+            nextLabel="Siguiente"
           />
-          <WizardNav onNext={() => setStep(1)} nextDisabled={!canNext} nextLabel="Siguiente" />
         </div>
       )}
 
       {step === 1 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-black-800">Cargá un servicio a tu nombre</h2>
-          <FileUpload
-            label="Factura de servicio"
-            hint="Debe contener tu direccion y no debe tener mas de 3 meses de antigüedad."
-            value={files.servicio}
-            onChange={(v) => setFiles({ ...files, servicio: v })}
+        <div className="space-y-5">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-black-800">Verificación facial</h2>
+            <p className="mt-1 text-xs text-black-400">
+              Coloca tu rostro dentro del círculo y sigue las instrucciones.
+            </p>
+          </div>
+
+          <div className="relative mx-auto h-56 w-56">
+            <div
+              className={`absolute inset-0 rounded-full border-2 ${
+                faceState === "verificado"
+                  ? "border-success bg-success-bg"
+                  : faceState === "verificando"
+                    ? "border-jaika-gold/40 bg-jaika-gold/5"
+                    : "border-dashed border-black-200 bg-plata-50"
+              }`}
+            />
+            {faceState === "verificando" && (
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-jaika-gold animate-spin" />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {faceState === "verificado" ? (
+                <CheckCircle2 size={72} strokeWidth={1.4} className="text-success" />
+              ) : faceState === "verificando" ? (
+                <ScanFace size={72} strokeWidth={1.2} className="text-jaika-gold-dark animate-pulse" />
+              ) : (
+                <ScanFace size={72} strokeWidth={1.2} className="text-black-300" />
+              )}
+            </div>
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-black-100 bg-white px-3 py-1 text-[11px] font-semibold whitespace-nowrap">
+              {faceState === "pendiente" && "Listo para verificar"}
+              {faceState === "verificando" && (
+                <span className="inline-flex items-center gap-1.5 text-jaika-gold-dark">
+                  <Loader2 size={12} className="animate-spin" /> Verificando…
+                </span>
+              )}
+              {faceState === "verificado" && (
+                <span className="inline-flex items-center gap-1.5 text-success">
+                  <CheckCircle2 size={12} /> Identidad verificada
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 text-xs text-black-500">
+            {[
+              "Buena iluminación, de frente a la cámara",
+              "Sin lentes, gorros ni mascarillas",
+              "Rostro centrado y sin sombras",
+              "Permite el acceso a tu cámara",
+            ].map((instruccion) => (
+              <div
+                key={instruccion}
+                className="flex items-start gap-2 rounded-sm border border-black-100 bg-plata-50 px-3 py-2"
+              >
+                <ShieldCheck size={14} className="mt-0.5 shrink-0 text-jaika-gold-dark" />
+                <span>{instruccion}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            {faceState === "pendiente" && (
+              <PrimaryButton onClick={() => setFaceState("verificando")}>
+                Iniciar verificación
+              </PrimaryButton>
+            )}
+            {faceState === "verificando" && (
+              <PrimaryButton disabled>Verificando identidad…</PrimaryButton>
+            )}
+            {faceState === "verificado" && (
+              <SecondaryButton
+                onClick={() => setFaceState("pendiente")}
+                className="w-full justify-center"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <RefreshCw size={14} /> Reintentar
+                </span>
+              </SecondaryButton>
+            )}
+          </div>
+
+          <WizardNav
+            onBack={() => setStep(0)}
+            onNext={() => setStep(2)}
+            nextDisabled={!canNext}
+            nextLabel="Siguiente"
           />
-          <WizardNav onBack={() => setStep(0)} onNext={() => setStep(2)} nextDisabled={!canNext} nextLabel="Siguiente" />
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-black-800">Cargá una selfie</h2>
-          <FileUpload
-            label="Selfie"
-            hint="De frente, en un lugar bien iluminado, sin anteojos ni sombreros."
-            value={files.selfie}
-            onChange={(v) => setFiles({ ...files, selfie: v })}
-            accept="image/*"
-          />
-          <WizardNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={!canNext} nextLabel="Siguiente" />
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-black-800">Domicilio de residencia</h2>
+          <h2 className="text-lg font-semibold text-black-800">Residencia</h2>
+          <p className="text-xs leading-relaxed text-black-400">
+            Indica el domicilio donde resides actualmente.
+          </p>
           <Field
-            label="Direccion"
+            label="Dirección"
             value={addr.direccion}
             onChange={(e) => setAddr({ ...addr, direccion: e.target.value })}
             error={err.direccion}
-          />
-          <Field
-            label="Direccion (opcional)"
-            value={addr.direccion2}
-            onChange={(e) => setAddr({ ...addr, direccion2: e.target.value })}
-            placeholder="Piso, departamento, referencia"
+            autoComplete="street-address"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field
@@ -243,33 +253,35 @@ function KycWizard() {
               value={addr.ciudad}
               onChange={(e) => setAddr({ ...addr, ciudad: e.target.value })}
               error={err.ciudad}
+              autoComplete="address-level2"
             />
             <SelectField
-              label="Provincia"
-              value={addr.provincia}
-              onChange={(v) => setAddr({ ...addr, provincia: v })}
-              options={PROVINCIAS}
-              error={err.provincia}
+              label="País"
+              value={addr.paisResidencia}
+              onChange={(v) => setAddr({ ...addr, paisResidencia: v })}
+              options={PAISES.map((p) => p.nombre)}
+              error={err.paisResidencia}
             />
           </div>
-          <Field
-            label="Codigo postal"
-            value={addr.cp}
-            onChange={(e) => setAddr({ ...addr, cp: e.target.value })}
-            error={err.cp}
-          />
-          {submitError && (
-            <p className="text-sm text-red-600">{submitError}</p>
-          )}
-          <WizardNav onBack={() => setStep(2)} onNext={finish} nextLabel={submitting ? "Enviando..." : "Finalizar"} nextDisabled={submitting} />
-          <div className="text-center pt-2">
-            <Link to="/login" search={{ register: undefined }} className="text-xs text-black-400 hover:text-red-500 underline underline-offset-2">Volver a inicio de sesión</Link>
+          <div className="rounded-sm border border-black-100 bg-plata-50 px-4 py-3 text-xs text-black-500">
+            País de postulación: <strong className="text-black-800">{pais.nombre}</strong> · Moneda
+            de referencia: <strong className="text-black-800">{pais.moneda}</strong>
           </div>
-        </div>
-      )}
-      {(step < 3 || loadingDocs) && (
-        <div className="text-center pt-4">
-          <Link to="/login" search={{ register: undefined }} className="text-xs text-black-400 hover:text-red-500 underline underline-offset-2">Volver a inicio de sesión</Link>
+          <WizardNav
+            onBack={() => setStep(1)}
+            onNext={finish}
+            nextLabel="Finalizar verificación"
+            nextDisabled={!canNext}
+          />
+          <div className="text-center pt-2">
+            <Link
+              to="/login"
+              search={{ register: undefined }}
+              className="text-xs text-black-400 hover:text-jaika-gold-dark underline underline-offset-2"
+            >
+              Volver al inicio de sesión
+            </Link>
+          </div>
         </div>
       )}
     </AuthShell>

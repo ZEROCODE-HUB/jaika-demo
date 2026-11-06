@@ -1,10 +1,10 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Menu, LogOut, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
-import { MollyLogo } from "./molly-logo";
+import { JaikaLogo } from "./jaika-logo";
 import { useDemoMode } from "@/contexts/demo-mode";
 
-export type NavLeaf = { to: string; label: string; icon: LucideIcon };
+export type NavLeaf = { to: string; label: string; icon: LucideIcon; badge?: number };
 export type NavGroup = { label: string; icon: LucideIcon; items: NavLeaf[] };
 export type NavItem = NavLeaf | NavGroup;
 
@@ -19,12 +19,14 @@ export function PortalShell({
   title,
   userName,
   userEmail,
+  mobileNav,
   children,
 }: {
   nav: NavItem[];
   title: string;
   userName?: string;
   userEmail?: string;
+  mobileNav?: NavLeaf[];
   children: ReactNode;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -34,8 +36,8 @@ export function PortalShell({
   const navigate = useNavigate();
 
   const leaves = useMemo(() => flattenLeaves(nav), [nav]);
-  const mainNav = leaves.slice(0, 4);
-  const more = leaves.slice(4);
+  const mainNav = mobileNav ?? leaves.slice(0, 4);
+  const more = leaves.filter((leaf) => !mainNav.some((item) => item.to === leaf.to));
 
   const onLogout = () => {
     setRole(null);
@@ -53,7 +55,7 @@ export function PortalShell({
           >
             <Menu size={20} />
           </button>
-          <MollyLogo size={28} />
+          <JaikaLogo size={28} />
           <span className="hidden md:inline text-sm text-black-400 border-l border-black-100 pl-3 ml-1">
             {title}
           </span>
@@ -63,7 +65,7 @@ export function PortalShell({
             <span className="text-xs text-black-400">{userEmail ?? "Sesión activa"}</span>
             <span className="text-sm font-semibold text-black-700">{userName ?? "Usuario"}</span>
           </div>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold bg-red-50 text-red-500">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold bg-jaika-gold/15 text-jaika-gold-dark">
             {userName ? userName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "U"}
           </div>
           <button
@@ -111,7 +113,7 @@ export function PortalShell({
             <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
             <aside className="absolute left-0 top-0 bottom-0 w-72 bg-[#1c2e4a] border-r border-navy-600 flex flex-col">
               <div className="p-4 border-b border-navy-600">
-                <MollyLogo size={28} />
+                <JaikaLogo size={28} variant="light" />
               </div>
               <nav className="p-3 flex-1 overflow-y-auto">
                 <SidebarNav nav={nav} path={path} onNavigate={() => setOpen(false)} />
@@ -134,10 +136,17 @@ export function PortalShell({
               key={item.to}
               to={item.to}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-                active ? "text-moli-orange font-semibold" : "text-black-400"
+                active ? "text-jaika-gold font-semibold" : "text-black-400"
               }`}
             >
-              <Icon size={20} strokeWidth={1.75} />
+              <span className="relative">
+                <Icon size={20} strokeWidth={1.75} />
+                {!!item.badge && (
+                  <span className="absolute -right-2 -top-1 min-w-4 h-4 rounded-full bg-jaika-gold-dark px-1 text-[9px] leading-4 text-white">
+                    {item.badge > 9 ? "9+" : item.badge}
+                  </span>
+                )}
+              </span>
               <span className="truncate px-1">{item.label}</span>
             </Link>
           );
@@ -230,13 +239,16 @@ function SidebarLink({
         onClick={onNavigate}
         title={item.label}
         aria-label={item.label}
-        className={`flex items-center justify-center w-11 h-11 mx-auto mb-1 rounded-lg transition-colors ${
+        className={`relative flex items-center justify-center w-11 h-11 mx-auto mb-1 rounded-lg transition-colors ${
           active
-            ? "bg-moli-orange text-white font-semibold"
+            ? "bg-jaika-gold text-white font-semibold"
             : "text-white/80 hover:text-white hover:bg-navy-600"
         }`}
       >
         <Icon size={20} strokeWidth={1.75} />
+        {!!item.badge && (
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-jaika-gold ring-1 ring-[#1c2e4a]" />
+        )}
       </Link>
     );
   }
@@ -250,16 +262,21 @@ function SidebarLink({
       } ${
         nested
           ? active
-            ? "bg-moli-orange-dark text-white font-semibold"
+            ? "bg-jaika-gold-dark text-white font-semibold"
             : "text-white/60 hover:text-white hover:bg-navy-600/50"
           : active
-            ? "bg-moli-orange text-white font-semibold"
+            ? "bg-jaika-gold text-white font-semibold"
             : "text-white/80 hover:text-white hover:bg-navy-600"
       }`}
     >
       {!nested && <Icon size={18} strokeWidth={1.75} />}
       {nested && <Icon size={15} strokeWidth={1.75} className="opacity-70" />}
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {!!item.badge && (
+        <span className="min-w-5 rounded-full bg-jaika-gold-dark px-1.5 text-center text-[10px] leading-5 text-white">
+          {item.badge > 9 ? "9+" : item.badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -284,7 +301,7 @@ function SidebarGroup({
         onClick={() => setOpen((v) => !v)}
         className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors ${
           containsActive
-            ? "text-moli-orange font-semibold"
+            ? "text-jaika-gold font-semibold"
             : "text-white/80 hover:text-white hover:bg-navy-600"
         }`}
         aria-expanded={expanded}
@@ -345,7 +362,7 @@ export function BtnPrimary({ children, ...p }: React.ButtonHTMLAttributes<HTMLBu
   return (
     <button
       {...p}
-      className={`inline-flex items-center justify-center gap-2 h-10 px-5 rounded-sm bg-red-500 text-white text-sm font-semibold cursor-pointer hover:bg-red-400 active:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 ${p.className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-2 h-10 px-5 rounded-sm bg-[#1c2e4a] text-white text-sm font-semibold cursor-pointer hover:bg-navy-600 active:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 ${p.className ?? ""}`}
     >
       {children}
     </button>

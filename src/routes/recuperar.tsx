@@ -9,7 +9,7 @@ export const Route = createFileRoute("/recuperar")({
   }),
   head: () => ({
     meta: [
-      { title: "Recuperar contraseña — MoliPay" },
+      { title: "Recuperar contraseña — Jaika" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -42,18 +42,18 @@ function Recuperar() {
 
   return (
     <AuthShell
-      leftEyebrow="MoliPay · Acceso"
-      leftTitle="Tu plataforma de pagos, sin intermediarios."
-      leftBody="MoliPay opera bajo normativa BCRA. Tus datos viajan cifrados y se almacenan bajo los estándares del sistema financiero argentino."
+      leftEyebrow="Jaika · Acceso"
+      leftTitle="Tu crédito respaldado por fideicomiso."
+      leftBody="Con tu 10% de inicial, tu crédito está preaprobado. Tu información viaja cifrada y se usa solo para gestionar tu solicitud."
     >
       {sent ? (
         <SuccessCard
-          title="Revisá tu correo"
+          title="Revisa tu correo"
           body={
             <p>
               Enviamos un enlace de recuperación a{" "}
-              <span className="font-semibold text-black-700">{email}</span>. Hacé clic en él para crear una
-              nueva contraseña. Si no lo encontrás, revisá la carpeta de spam.
+              <span className="font-semibold text-black-700">{email}</span>. Haz clic en él para crear una
+              nueva contraseña. Si no lo encuentras, revisa la carpeta de spam.
             </p>
           }
         >
@@ -66,7 +66,7 @@ function Recuperar() {
           <FormTitle
             eyebrow="Recuperar contraseña"
             title="¿Olvidaste tu contraseña?"
-            subtitle="Ingresá el correo asociado a tu cuenta y te enviaremos un enlace para crear una nueva."
+            subtitle="Ingresa el correo asociado a tu cuenta y te enviaremos un enlace para crear una nueva."
           />
           <form className="space-y-4" onSubmit={submit}>
             <Field

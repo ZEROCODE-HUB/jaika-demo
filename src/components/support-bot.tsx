@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Bot, Send, X, MessageCircle } from "lucide-react";
 import { Input, BtnPrimary } from "@/components/portal-shell";
+import {
+  ETAPA_DESCRIPCION,
+  ETAPA_LABEL,
+  useJaikaDemo,
+} from "@/lib/jaika-demo-store";
 
 type Message = {
   role: "user" | "bot";
@@ -8,39 +13,77 @@ type Message = {
 };
 
 const faqs = [
-  "¿Cómo creo un link de pago?",
-  "¿Cómo transfiero dinero?",
-  "¿Cómo agrego una subcuenta?",
-  "¿Cómo pago un servicio?",
-  "¿Qué es el débito directo?",
+  "¿Cómo va mi crédito?",
+  "¿Qué significa mi etapa?",
+  "¿Cómo acredito mi inicial?",
+  "¿Qué documentos necesito?",
+  "¿Cuándo se desembolsa?",
 ];
 
-const botResponses: Record<string, string> = {
-  "¿Cómo creo un link de pago?":
-    "Para crear un link de pago: 1) Andá a la sección 'Link de pago' > 'Productos'. 2) Agregá los productos que querés cobrar. 3) Seleccionálos y hacé clic en 'Generar link'. 4) Configurá los métodos de pago y la fecha de expiración. 5) Confirmá y compartí el link con tu cliente.",
-  "¿Cómo transfiero dinero?":
-    "Para transferir dinero: 1) Andá a la sección 'Transferir'. 2) Elegí el tipo de transferencia (única, programada). 3) Ingresá el CBU/CVU o seleccioná un destinatario. 4) Indicá el monto y la subcuenta de origen. 5) Revisá los datos y confirmá.",
-  "¿Cómo agrego una subcuenta?":
-    "Podés agregar una subcuenta desde 'Subcuentas' > 'Nueva subcuenta'. Completá el nombre, tipo (Operativa, Recaudación, etc.), responsable y límite diario. Cada subcuenta tiene su propio CBU.",
-  "¿Cómo pago un servicio?":
-    "Andá a 'Pago de servicios'. Encontrás tres vistas: Próximos pagos, Servicios suscritos e Historial. Seleccioná el servicio que querés pagar y hacé clic en 'Pagar'. Podés elegir la subcuenta de origen y la fecha de pago.",
-  "¿Qué es el débito directo?":
-    "El débito directo permite que el cobro de un servicio se realice automáticamente desde tu cuenta en la fecha de vencimiento. Activá la opción 'DD' (Débito Directo) en los servicios compatibles. Solo algunos proveedores lo soportan.",
-};
+function normalizar(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
-function botReply(text: string): string {
-  return (
-    botResponses[text] ||
-    "No encontré una respuesta específica para tu consulta. ¿Podrías reformularla? También podés contactar a nuestro equipo de soporte en soporte@molipay.com.ar."
-  );
+function botReply(
+  text: string,
+  contexto: {
+    etapa: ReturnType<typeof useJaikaDemo.getState>["etapa"];
+    firmada: boolean;
+    acreditada: boolean;
+  },
+) {
+  const consulta = normalizar(text);
+  const etapa = ETAPA_LABEL[contexto.etapa];
+  const descripcion = ETAPA_DESCRIPCION[contexto.etapa];
+
+  if (consulta.includes("como va") || consulta.includes("mi credito") || consulta.includes("etapa")) {
+    if (!contexto.firmada) {
+      return "Todavía no tienes una solicitud firmada. Ingresa a Solicitud de crédito, completa los cuatro pasos y firma electrónicamente para comenzar.";
+    }
+    return `Tu crédito está en la etapa "${etapa}". ${descripcion} Puedes ver el detalle completo en Seguimiento.`;
+  }
+
+  if (consulta.includes("inicial") || consulta.includes("preaprob") || consulta.includes("pago")) {
+    if (contexto.acreditada) {
+      return "Tu 10% inicial ya está acreditado y tu crédito quedó preaprobado. Ahora sigue la revisión de registros públicos.";
+    }
+    if (contexto.firmada) {
+      return "Ingresa a Preaprobación y elige pagar en línea (tarjeta o transferencia simulada) o adjuntar el comprobante si ya pagaste por fuera.";
+    }
+    return "Primero debes firmar tu solicitud. Después podrás acreditar el 10% inicial desde la sección Preaprobación.";
+  }
+
+  if (consulta.includes("documento")) {
+    return "Los documentos de tu proceso son: documento de identidad, sustento de ingresos, minuta de compraventa, contrato de crédito y cronograma de pagos. Puedes verlos en la sección Documentos a medida que avanzas de etapa.";
+  }
+
+  if (consulta.includes("desembols") || consulta.includes("llaves")) {
+    return "El desembolso ocurre después de completar los registros públicos y firmar en notaría. Luego se coordina la entrega de llaves. Puedes seguir cada hito en Seguimiento.";
+  }
+
+  if (consulta.includes("firma") || consulta.includes("solicitud")) {
+    return "La solicitud tiene cuatro pasos: tipo de bien, simulador, datos del bien y firma electrónica. Puedes volver atrás sin perder los datos y firmar al final.";
+  }
+
+  if (consulta.includes("cuota") || consulta.includes("cronograma") || consulta.includes("pagar")) {
+    return "En Cronograma encontrarás tus cuotas, montos, vencimientos y si están pagadas o pendientes. La cuota se calcula con la fórmula de cuota fija.";
+  }
+
+  return "No encontré una respuesta específica para tu consulta. Puedes revisar las secciones del portal o contactar a tu asesor de Jaika desde Mi cuenta.";
 }
 
 export function SupportBot() {
+  const etapa = useJaikaDemo((s) => s.etapa);
+  const solicitud = useJaikaDemo((s) => s.solicitud);
+  const preaprobacion = useJaikaDemo((s) => s.preaprobacion);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      text: "¡Hola! Soy el asistente virtual de Molly. ¿En qué puedo ayudarte?",
+      text: "¡Hola! Soy el asistente virtual de Jaika. Puedo ayudarte con tu solicitud, preaprobación y seguimiento del crédito.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -55,8 +98,18 @@ export function SupportBot() {
     if (!q) return;
     setMessages((prev) => [...prev, { role: "user", text: q }]);
     setInput("");
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: "bot", text: botReply(q) }]);
+    window.setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          text: botReply(q, {
+            etapa,
+            firmada: !!solicitud?.firmada,
+            acreditada: !!preaprobacion?.acreditada,
+          }),
+        },
+      ]);
     }, 400);
   };
 
@@ -64,49 +117,53 @@ export function SupportBot() {
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#1c2e4a] text-jaika-gold shadow-lg transition hover:opacity-90"
         aria-label="Asistente virtual"
       >
         {open ? <X size={22} /> : <MessageCircle size={22} />}
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-2rem)] bg-card border rounded-xl shadow-2xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b bg-[color:var(--brand-soft)]">
+        <div className="fixed bottom-24 right-6 z-50 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-black-100 bg-white shadow-2xl">
+          <div className="flex items-center justify-between border-b border-black-100 bg-plata-50 px-4 py-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[color:var(--brand-dark)] flex items-center justify-center">
-                <Bot size={16} className="text-white" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1c2e4a]">
+                <Bot size={16} className="text-jaika-gold" />
               </div>
               <div>
-                <div className="text-sm font-semibold">Asistente Molly</div>
-                <div className="text-[10px] text-muted-foreground">Online</div>
+                <div className="text-sm font-semibold text-black-800">Asistente Jaika</div>
+                <div className="text-[10px] text-black-400">Etapa: {ETAPA_LABEL[etapa]}</div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="p-1 hover:opacity-70">
+            <button
+              onClick={() => setOpen(false)}
+              className="p-1 text-black-400 hover:text-black-700"
+              aria-label="Cerrar asistente"
+            >
               <X size={16} />
             </button>
           </div>
 
-          <div className="px-3 pt-3 flex gap-1.5 overflow-x-auto pb-1 shrink-0">
-            {faqs.slice(0, 3).map((q) => (
+          <div className="flex shrink-0 gap-1.5 overflow-x-auto px-3 pb-1 pt-3">
+            {faqs.map((q) => (
               <button
                 key={q}
                 onClick={() => send(q)}
-                className="shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-full border bg-card hover:bg-muted transition whitespace-nowrap"
+                className="shrink-0 whitespace-nowrap rounded-full border border-black-100 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-black-500 transition hover:bg-plata-50"
               >
                 {q}
               </button>
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[280px] max-h-[360px]">
+          <div className="max-h-[360px] min-h-[280px] flex-1 space-y-3 overflow-y-auto p-3">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm ${
+                  className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed ${
                     m.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
+                      ? "bg-[#1c2e4a] text-white"
+                      : "bg-plata-100 text-black-700"
                   }`}
                 >
                   {m.text}
@@ -116,22 +173,21 @@ export function SupportBot() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="flex gap-2 p-3 border-t">
+          <div className="flex gap-2 border-t border-black-100 p-3">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send(input)}
-              placeholder="Escribí tu consulta..."
+              placeholder="Escribe tu consulta..."
               className="h-9 text-sm"
             />
-            <BtnPrimary className="h-9 w-9 px-0 shrink-0" onClick={() => send(input)}>
+            <BtnPrimary className="h-9 w-9 shrink-0 px-0" onClick={() => send(input)}>
               <Send size={14} />
             </BtnPrimary>
           </div>
 
-          <div className="px-3 pb-2 text-[10px] text-muted-foreground">
-            También podés escribir a{" "}
-            <span className="font-semibold">soporte@molipay.com.ar</span>
+          <div className="px-3 pb-2 text-[10px] text-black-400">
+            Respuestas referenciales de la demo. Para casos particulares, contacta a tu asesor.
           </div>
         </div>
       )}

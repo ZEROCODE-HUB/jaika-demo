@@ -1,6 +1,5 @@
-﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   AuthShell,
   Field,
@@ -12,68 +11,46 @@ import {
   WizardNav,
 } from "@/components/onboarding";
 import { OCUPACIONES, ORIGEN_FONDOS, useOnboarding } from "@/lib/onboarding-store";
+import {
+  MONEDAS,
+  nombreCompleto,
+  paisPorNombre,
+  useJaikaDemo,
+} from "@/lib/jaika-demo-store";
 
 export const Route = createFileRoute("/onboarding/datos-personales")({
   head: () => ({
     meta: [
-      { title: "Validacion de datos personales — Molipay" },
+      { title: "Perfil del solicitante — Jaika" },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: DatosPersonales,
 });
 
-const STEPS = ["Datos personales", "Informacion financiera", "Validacion final"];
+const STEPS = ["Perfil", "Información financiera", "Confirmación"];
 
 function DatosPersonales() {
   const nav = useNavigate();
-  const { tipoCuenta, datosPersonales, setDatosPersonales } = useOnboarding();
+  const { perfil, setPerfil } = useJaikaDemo();
   const [step, setStep] = useState(0);
   const [f, setF] = useState({
-    genero: datosPersonales.genero ?? "",
-    cuitCuil: datosPersonales.cuitCuil ?? "",
-    ocupacion: datosPersonales.ocupacion ?? "",
-    origenFondos: datosPersonales.origenFondos ?? "",
-    esPEP: datosPersonales.esPEP ?? false,
+    genero: perfil.genero ?? "",
+    ocupacion: perfil.ocupacion ?? "",
+    origenFondos: perfil.origenFondos ?? "",
+    esPEP: perfil.esPEP ?? false,
   });
   const [err, setErr] = useState<Record<string, string>>({});
-  useEffect(() => {
-    (async () => {
-      try {
-        const { requireSupabase } = await import("@/lib/supabase");
-        const sb = requireSupabase();
-        const { data: u } = await sb.auth.getUser();
-        const mail = u.user?.email;
-        if (!mail) return;
-        // Protección: si el store persiste datos de otra cuenta en el mismo browser,
-        // vaciarlo y reiniciar el formulario antes de que se pre-carge con esa data.
-        const st = useOnboarding.getState();
-        if (st.registro.email && st.registro.email !== mail) {
-          st.reset();
-          setF({ genero: "", cuitCuil: "", ocupacion: "", origenFondos: "", esPEP: false });
-        }
-        const { data: cli } = await sb.from("clientes").select("genero, cuit_cuil, ocupacion, origen_fondos, es_pep").eq("correo", mail).maybeSingle();
-        if (!cli) return;
-        setF((prev) => ({
-          genero: prev.genero || (cli as any).genero || "",
-          cuitCuil: prev.cuitCuil || (cli as any).cuit_cuil || "",
-          ocupacion: prev.ocupacion || (cli as any).ocupacion || "",
-          origenFondos: prev.origenFondos || (cli as any).origen_fondos || "",
-          esPEP: prev.esPEP || !!(cli as any).es_pep,
-        }));
-      } catch { /* ignore */ }
-    })();
-  }, []);
 
-  const cuitDigits = f.cuitCuil.replace(/\D/g, "");
-  const cuitExcede = cuitDigits.length > 11;
+  const pais = paisPorNombre(perfil.paisPostula);
+  const moneda = MONEDAS[pais.moneda];
+  const documento = perfil.tipoDocumento
+    ? `${perfil.tipoDocumento} ${perfil.numeroDocumento ?? ""}`.trim()
+    : "—";
+
   const validateStep0 = () => {
     const e: Record<string, string> = {};
-    if (!f.genero) e.genero = "El genero es requerido";
-    if (!f.cuitCuil.trim()) e.cuitCuil = "Ingresa tu CUIT/CUIL";
-    else if (cuitExcede) e.cuitCuil = "Máximo 11 dígitos permitidos. Quita los excedentes.";
-    else if (cuitDigits.length !== 11) e.cuitCuil = "El CUIT/CUIL debe tener exactamente 11 dígitos.";
-    if (!f.ocupacion) e.ocupacion = "Selecciona una ocupacion";
+    if (!f.ocupacion) e.ocupacion = "Selecciona tu ocupación";
     setErr(e);
     return Object.keys(e).length === 0;
   };
@@ -89,43 +66,45 @@ function DatosPersonales() {
     if (step === 0 && !validateStep0()) return;
     if (step === 1 && !validateStep1()) return;
     if (step === 2) {
-      setDatosPersonales(f);
-      if (tipoCuenta === "juridica") return nav({ to: "/onboarding/datos-empresa" });
-      return nav({ to: "/onboarding/kyc" });
+      setPerfil(f);
+      useOnboarding.getState().setDatosPersonales(f);
+      nav({ to: "/onboarding/kyc" });
+      return;
     }
     setStep(step + 1);
   };
 
   return (
     <AuthShell
-      leftEyebrow="Paso 3 · Datos personales"
-      leftTitle={tipoCuenta === "juridica" ? "Datos del representante legal." : "Completa tu perfil regulatorio."}
-      leftBody="Estos datos son requeridos por normativa antilavado (UIF) y solo se comparten con las autoridades competentes."
+      leftEyebrow="Paso 3 · Perfil"
+      leftTitle="Completa tu perfil de solicitante."
+      leftBody="Estos datos nos permiten conocer tu perfil y acompañarte durante el proceso de crédito."
       step={`Paso ${step + 1} de 3`}
     >
-      <FormTitle eyebrow="KYC · Datos personales" title="Validacion de datos personales" />
+      <FormTitle
+        eyebrow="Solicitud · Persona natural"
+        title="Perfil del solicitante"
+        subtitle="Revisa tu documento y completa la información financiera."
+      />
       <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <div className="space-y-4">
+          <Field
+            label="Documento de identidad"
+            value={documento}
+            readOnly
+            className="bg-black-50 text-black-500"
+            hint="Ingresado en el registro. Si debes corregirlo, vuelve a iniciar el alta."
+          />
           <SelectField
-            label="Genero"
+            label="Género (opcional)"
             value={f.genero}
             onChange={(v) => setF({ ...f, genero: v })}
             options={["Femenino", "Masculino", "No binario", "Prefiero no responder"]}
-            error={err.genero}
-          />
-          <Field
-            label="CUIT / CUIL"
-            value={f.cuitCuil}
-            onChange={(e) => setF({ ...f, cuitCuil: e.target.value })}
-            placeholder="20-12345678-9"
-            className="font-mono"
-            error={err.cuitCuil || (cuitExcede ? "Máximo 11 dígitos permitidos" : undefined)}
-            hint={cuitDigits.length > 0 ? `${cuitDigits.length}/11 dígitos` : undefined}
           />
           <SelectField
-            label="Ocupacion"
+            label="Ocupación"
             value={f.ocupacion}
             onChange={(v) => setF({ ...f, ocupacion: v })}
             options={OCUPACIONES}
@@ -144,28 +123,21 @@ function DatosPersonales() {
             options={ORIGEN_FONDOS}
             error={err.origenFondos}
           />
-          <WizardNav onBack={() => setStep(0)} onNext={next} nextLabel="Siguiente" />
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="space-y-5">
           <div className="p-5 text-xs leading-relaxed text-black-500 bg-black-50 border border-black-100 rounded-sm">
-            Se consideran <strong>PEPs</strong> a los Funcionarios Públicos Nacionales, Provinciales y Municipales (tanto
-            Nacionales como Extranjeros) de los Poderes Ejecutivo, Legislativo y Judicial, que ocupan o que ocuparon
-            altos cargos jerárquicos, así como también a sus familiares hasta el segundo grado de consanguinidad. Los
-            funcionarios calificados como PEPs continúan siéndolo hasta dos años después de haber cesado en sus
-            funciones.
+            Se consideran personas políticamente expuestas a funcionarios públicos y a sus
+            familiares hasta el segundo grado de consanguinidad, conforme a la normativa aplicable.
           </div>
           <label className="flex items-center justify-between gap-4 py-2">
-            <span className="text-sm font-semibold text-black-800">¿Es persona políticamente expuesta?</span>
+            <span className="text-sm font-semibold text-black-800">
+              ¿Es persona políticamente expuesta?
+            </span>
             <button
               type="button"
               onClick={() => setF({ ...f, esPEP: !f.esPEP })}
               role="switch"
               aria-checked={f.esPEP}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 ${
-                f.esPEP ? "bg-red-500" : "bg-black-300"
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-200 ${
+                f.esPEP ? "bg-jaika-gold" : "bg-black-300"
               }`}
             >
               <span
@@ -175,16 +147,55 @@ function DatosPersonales() {
               />
             </button>
           </label>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3">
-            <SecondaryButton onClick={() => setStep(1)}>Atras</SecondaryButton>
+          <WizardNav onBack={() => setStep(0)} onNext={next} nextLabel="Siguiente" />
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-5">
+          <div className="rounded-sm border border-black-100 overflow-hidden">
+            <div className="bg-[#1c2e4a] px-4 py-3">
+              <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-gold">
+                Resumen del solicitante
+              </div>
+            </div>
+            <dl className="divide-y divide-black-100">
+              {[
+                ["Nombre", nombreCompleto(perfil) || "—"],
+                ["País de postulación", pais.nombre],
+                ["Moneda", `${moneda.simbolo} (${pais.moneda})`],
+                ["Documento", documento],
+                ["Ocupación", f.ocupacion || "—"],
+                ["Origen de fondos", f.origenFondos || "—"],
+                ["Persona políticamente expuesta", f.esPEP ? "Sí" : "No"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="grid grid-cols-1 sm:grid-cols-[minmax(0,160px)_1fr] gap-1 sm:gap-4 px-4 py-3 text-sm"
+                >
+                  <dt className="text-black-400">{label}</dt>
+                  <dd className="font-semibold text-black-800">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <SecondaryButton onClick={() => setStep(1)}>Atrás</SecondaryButton>
             <div className="flex-1">
-              <PrimaryButton onClick={next}>Siguiente paso</PrimaryButton>
+              <PrimaryButton onClick={next}>Continuar a verificación</PrimaryButton>
             </div>
           </div>
         </div>
       )}
+
       <div className="text-center pt-4">
-        <Link to="/login" search={{ register: undefined }} className="text-xs text-black-400 hover:text-red-500 underline underline-offset-2">Volver a inicio de sesión</Link>
+        <Link
+          to="/login"
+          search={{ register: undefined }}
+          className="text-xs text-black-400 hover:text-jaika-gold-dark underline underline-offset-2"
+        >
+          Volver al inicio de sesión
+        </Link>
       </div>
     </AuthShell>
   );

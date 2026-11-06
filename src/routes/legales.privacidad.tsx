@@ -1,12 +1,11 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { MollyLogo } from "@/components/molly-logo";
 
 export const Route = createFileRoute("/legales/privacidad")({
   head: () => ({
     meta: [
-      { title: "Politica de Privacidad — Molly Money Life" },
-      { name: "description", content: "Politica de privacidad y tratamiento de datos personales." },
+      { title: "Políticas de privacidad — Jaika" },
+      { name: "description", content: "Políticas de privacidad de la plataforma Jaika (texto de ejemplo para la demo)." },
     ],
   }),
   component: Page,
@@ -14,39 +13,36 @@ export const Route = createFileRoute("/legales/privacidad")({
 
 function Page() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-30">
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-black-100 bg-white sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-          <MollyLogo />
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+          <Link to="/" className="text-xl font-bold tracking-tight text-navy-700">Jaika</Link>
+          <Link to="/" className="text-sm text-black-500 hover:text-black-800 inline-flex items-center gap-1">
             <ArrowLeft size={14} /> Volver al inicio
           </Link>
         </div>
       </header>
       <article className="max-w-3xl mx-auto px-6 py-16">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Politica de Privacidad</h1>
-        <p className="text-sm text-muted-foreground mt-2">ultima actualizacion: 01/06/2026</p>
-
-        <section className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
+        <p className="inline-block text-xs font-semibold uppercase tracking-wider text-warning bg-warning-bg border border-warning-border rounded-full px-3 py-1">
+          Texto de ejemplo para la demo
+        </p>
+        <h1 className="mt-4 text-3xl md:text-4xl font-semibold tracking-tight text-black-800">Políticas de privacidad</h1>
+        <section className="mt-8 space-y-6 text-sm leading-relaxed text-black-500">
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">1. Responsable del tratamiento</h2>
-            <p>Molly Money Life SA, CUIT 30-71000000-0, con domicilio en Av. Corrientes 1234, CABA, Argentina, es la responsable del tratamiento de los datos personales.</p>
+            <h2 className="text-base font-semibold text-black-800">1. Datos que tratamos</h2>
+            <p className="mt-2">Datos de identificación, documento de identidad, verificación facial, datos de contacto y la información del bien a financiar.</p>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">2. Datos recolectados</h2>
-            <p>Recolectamos datos identificatorios de la persona juridica y de sus representantes, datos operativos de la cuenta y datos de navegacion con fines de seguridad y prevencion de fraude.</p>
+            <h2 className="text-base font-semibold text-black-800">2. Finalidad</h2>
+            <p className="mt-2">Validar la identidad del solicitante, evaluar y preaprobar su crédito, y mantenerlo informado sobre cada etapa.</p>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">3. Finalidad</h2>
-            <p>Los datos se utilizan para prestar el servicio, cumplir obligaciones regulatorias (Ley 25.246 de Prevencion de Lavado de Activos) y comunicaciones vinculadas al servicio.</p>
+            <h2 className="text-base font-semibold text-black-800">3. Seguridad</h2>
+            <p className="mt-2">La información se trata con confidencialidad y solo la conoce el equipo de Jaika que gestiona la solicitud.</p>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">4. Derechos del titular</h2>
-            <p>De acuerdo con la Ley 25.326, el titular podra ejercer los derechos de acceso, rectificacion, actualizacion y supresion de sus datos escribiendo a privacidad@molly.com.ar.</p>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">5. Autoridad de contralor</h2>
-            <p>La Agencia de Acceso a la Informacion Publica, en su caracter de organo de Control de la Ley 25.326, tiene la atribucion de atender las denuncias y reclamos.</p>
+            <h2 className="text-base font-semibold text-black-800">4. Derechos</h2>
+            <p className="mt-2">El usuario puede solicitar el acceso, la corrección o la eliminación de sus datos escribiendo al equipo de Jaika.</p>
           </div>
         </section>
       </article>
