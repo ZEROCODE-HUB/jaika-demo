@@ -384,7 +384,11 @@ export function calcularCredito(tipoBien: TipoBien, valor: number, plazo: number
 export type CuotaCronograma = {
   numero: number;
   vencimiento: string;
+  saldoInicial: number;
+  capital: number;
+  interes: number;
   monto: number;
+  saldoFinal: number;
   estado: "pagada" | "pendiente";
 };
 
@@ -394,25 +398,41 @@ export function calcularCronograma(
   preaprobacion: PreaprobacionDemo | null,
 ): CuotaCronograma[] {
   if (!solicitud) return [];
-  const { cuota } = calcularCredito(solicitud.tipoBien, solicitud.valor, solicitud.plazo);
+  const { cuota, financiado, tasaAnual } = calcularCredito(
+    solicitud.tipoBien,
+    solicitud.valor,
+    solicitud.plazo,
+  );
+  const tasaMensual = tasaAnual / 100 / 12;
   const base =
     preaprobacion?.fecha && !Number.isNaN(new Date(preaprobacion.fecha).getTime())
       ? new Date(preaprobacion.fecha)
       : new Date();
   const pagadas = etapa === "en_pago" ? Math.min(3, solicitud.plazo) : 0;
+  let saldo = financiado;
 
   return Array.from({ length: solicitud.plazo }, (_, i) => {
+    const esUltima = i === solicitud.plazo - 1;
+    const interes = saldo * tasaMensual;
+    const capital = esUltima ? saldo : cuota - interes;
+    const saldoFinal = Math.max(0, saldo - capital);
     const fecha = new Date(
       base.getFullYear(),
       base.getMonth() + i + 1,
       Math.min(base.getDate(), 28),
     );
-    return {
+    const item: CuotaCronograma = {
       numero: i + 1,
       vencimiento: fecha.toISOString(),
-      monto: cuota,
+      saldoInicial: saldo,
+      capital,
+      interes,
+      monto: capital + interes,
+      saldoFinal,
       estado: i < pagadas ? "pagada" : "pendiente",
     };
+    saldo = saldoFinal;
+    return item;
   });
 }
 
