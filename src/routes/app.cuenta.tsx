@@ -64,7 +64,7 @@ function CuentaPage() {
         <div className="space-y-4">
           <Card>
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1c2e4a] font-display text-xl font-semibold text-jaika-gold">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1c2e4a] font-display text-xl font-semibold text-jaika-mint">
                 {iniciales(nombre) || <UserRound size={24} />}
               </div>
               <div className="min-w-0">

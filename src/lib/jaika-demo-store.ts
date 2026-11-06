@@ -110,10 +110,10 @@ export const ETAPA_TONE: Record<EtapaCredito, EtapaTone> = {
 export const ETAPA_DESCRIPCION: Record<EtapaCredito, string> = {
   sin_solicitud: "Aún no tienes una solicitud de crédito activa.",
   solicitud_firmada: "Recibimos tu solicitud. Acredita tu 10% inicial para continuar.",
-  preaprobado: "Tu crédito está preaprobado. Inicia el proceso de registros públicos.",
-  registros_publicos: "Estamos revisando los registros públicos del bien.",
-  notaria: "Es momento de firmar tus contratos en notaría.",
-  desembolso: "El fideicomiso está procesando el desembolso.",
+  preaprobado: "Tu crédito está preaprobado. Jaika te contactará para pedir la información del inmueble.",
+  registros_publicos: "Validamos que el inmueble esté inscrito en registros públicos.",
+  notaria: "Firma tus contratos en notaría; te citaremos en la oficina de Miraflores.",
+  desembolso: "Con el contrato firmado, el fideicomiso realiza el desembolso.",
   entrega_llaves: "El bien está listo para la entrega de llaves.",
   en_pago: "Tu crédito está activo y tus cuotas están en curso.",
 };
@@ -175,8 +175,19 @@ export type SolicitudDemo = {
   estado: EstadoSolicitud;
 };
 
+/** Un credito guardado (el activo vive en solicitud/preaprobacion/etapa; los demas aqui). */
+export type CreditoDemo = {
+  id: string;
+  solicitud: SolicitudDemo | null;
+  preaprobacion: PreaprobacionDemo | null;
+  etapa: EtapaCredito;
+  creadoEn: string;
+};
+
 type State = {
   perfil: Partial<PerfilDemo>;
+  creditoActivoId: string;
+  creditos: CreditoDemo[];
   solicitud: SolicitudDemo | null;
   preaprobacion: PreaprobacionDemo | null;
   etapa: EtapaCredito;
@@ -195,6 +206,10 @@ type State = {
   enviarSolicitud: () => void;
   cargarDemo: () => void;
   resetDemo: () => void;
+  /** Guarda el credito activo en "Mis creditos" y deja uno nuevo listo para solicitar. */
+  nuevaSolicitud: () => void;
+  /** Cambia el credito activo por otro de "Mis creditos". */
+  seleccionarCredito: (id: string) => void;
 };
 
 const DATOS_BIEN_DEMO: DatosBien = {
@@ -236,13 +251,45 @@ const DEMO_SOLICITUD: SolicitudDemo = {
   estado: "enviada",
 };
 
+const DEMO_CREDITO_VEHICULO: CreditoDemo = {
+  id: "cr-demo-vehiculo",
+  solicitud: {
+    tipoBien: "Vehículo",
+    valor: 95000,
+    plazo: 48,
+    datosBien: {
+      descripcion: "Camioneta SUV 2026 para uso familiar",
+      ubicacion: "Concesionario Autos del Sur, Surco, Lima",
+      vendedor: "Autos del Sur S.A.C.",
+    },
+    firmada: true,
+    moneda: "PEN",
+    origen: "demo",
+    estado: "enviada",
+  },
+  preaprobacion: { metodo: "por_fuera", acreditada: true, fecha: new Date(Date.now() - 120 * 864e5).toISOString() },
+  etapa: "en_pago",
+  creadoEn: new Date(Date.now() - 125 * 864e5).toISOString(),
+};
+
 const initial = {
   perfil: {} as Partial<PerfilDemo>,
+  creditoActivoId: "cr-1",
+  creditos: [] as CreditoDemo[],
   solicitud: null as SolicitudDemo | null,
   preaprobacion: null as PreaprobacionDemo | null,
   etapa: "sin_solicitud" as EtapaCredito,
   notificaciones: [] as NotificacionDemo[],
 };
+
+function nuevoIdCredito() {
+  return `cr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** Hay un credito en marcha (firmado o mas adelante) en el slot activo. */
+export function tieneCreditoEnCurso(etapa: EtapaCredito) {
+  return etapaIndex(etapa) >= etapaIndex("solicitud_firmada");
+}
 
 export function paisPorNombre(nombre?: string) {
   return PAISES.find((p) => p.nombre === nombre) ?? PAISES[0];
@@ -489,6 +536,8 @@ export const useJaikaDemo = create<State>()(
             preaprobacion: null,
             etapa: "sin_solicitud",
             notificaciones: [],
+            creditos: [],
+            creditoActivoId: nuevoIdCredito(),
           };
         }),
       setSolicitud: (solicitud) => set({ solicitud }),
@@ -629,8 +678,50 @@ export const useJaikaDemo = create<State>()(
         set((s) =>
           s.solicitud ? { solicitud: { ...s.solicitud, estado: "enviada" } } : s,
         ),
+      nuevaSolicitud: () =>
+        set((s) => {
+          if (!tieneCreditoEnCurso(s.etapa)) return s;
+          const actual: CreditoDemo = {
+            id: s.creditoActivoId,
+            solicitud: s.solicitud,
+            preaprobacion: s.preaprobacion,
+            etapa: s.etapa,
+            creadoEn: s.preaprobacion?.fecha ?? new Date().toISOString(),
+          };
+          return {
+            creditos: [actual, ...(s.creditos ?? []).filter((c) => c.id !== actual.id)],
+            creditoActivoId: nuevoIdCredito(),
+            solicitud: null,
+            preaprobacion: null,
+            etapa: "sin_solicitud",
+          };
+        }),
+      seleccionarCredito: (id) =>
+        set((s) => {
+          const lista = s.creditos ?? [];
+          const destino = lista.find((c) => c.id === id);
+          if (!destino || id === s.creditoActivoId) return s;
+          const resto = lista.filter((c) => c.id !== id);
+          const actualGuardable = tieneCreditoEnCurso(s.etapa);
+          const actual: CreditoDemo = {
+            id: s.creditoActivoId,
+            solicitud: s.solicitud,
+            preaprobacion: s.preaprobacion,
+            etapa: s.etapa,
+            creadoEn: s.preaprobacion?.fecha ?? new Date().toISOString(),
+          };
+          return {
+            creditos: actualGuardable ? [actual, ...resto] : resto,
+            creditoActivoId: destino.id,
+            solicitud: destino.solicitud,
+            preaprobacion: destino.preaprobacion,
+            etapa: destino.etapa,
+          };
+        }),
       cargarDemo: () =>
         set({
+          creditoActivoId: "cr-demo-vivienda",
+          creditos: [DEMO_CREDITO_VEHICULO],
           perfil: { ...DEMO_PERFIL },
           solicitud: { ...DEMO_SOLICITUD, datosBien: { ...DATOS_BIEN_DEMO } },
           preaprobacion: {
@@ -664,7 +755,18 @@ export const useJaikaDemo = create<State>()(
     }),
     {
       name: "jaika_demo",
+      version: 2,
+      migrate: (persisted) => {
+        const st = (persisted ?? {}) as Partial<State>;
+        return {
+          ...st,
+          creditos: st.creditos ?? [],
+          creditoActivoId: st.creditoActivoId ?? "cr-1",
+        } as State;
+      },
       partialize: (s) => ({
+        creditoActivoId: s.creditoActivoId,
+        creditos: s.creditos,
         perfil: s.perfil,
         solicitud: s.solicitud,
         preaprobacion: s.preaprobacion,

@@ -155,7 +155,7 @@ function DatosPersonales() {
         <div className="space-y-5">
           <div className="rounded-sm border border-black-100 overflow-hidden">
             <div className="bg-[#1c2e4a] px-4 py-3">
-              <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-gold">
+              <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-mint">
                 Resumen del solicitante
               </div>
             </div>

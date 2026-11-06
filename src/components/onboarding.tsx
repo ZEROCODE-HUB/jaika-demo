@@ -37,7 +37,7 @@ export function AuthShell({
           <div className="mt-12">
             <div className="flex items-center gap-2 mb-6">
               <span className="w-6 h-px bg-jaika-gold/70" />
-              <span className="font-sans text-[0.65rem] tracking-[0.25em] uppercase text-jaika-gold">
+              <span className="font-sans text-[0.65rem] tracking-[0.25em] uppercase text-jaika-mint">
                 {leftEyebrow}
               </span>
             </div>
@@ -54,8 +54,8 @@ export function AuthShell({
 
         <div className="relative z-10 space-y-5">
           <div className="inline-flex items-center gap-2.5 px-3 py-2 border border-jaika-gold/30 rounded-sm bg-jaika-gold/5 backdrop-blur">
-            <ShieldCheck size={13} strokeWidth={1.5} className="text-jaika-gold" />
-            <span className="font-sans text-[0.65rem] tracking-[0.1em] uppercase text-jaika-gold">
+            <ShieldCheck size={13} strokeWidth={1.5} className="text-jaika-mint" />
+            <span className="font-sans text-[0.65rem] tracking-[0.1em] uppercase text-jaika-mint">
               Datos protegidos
             </span>
           </div>
@@ -104,7 +104,7 @@ export function Stepper({ steps, current }: { steps: string[]; current: number }
                 done
                   ? "bg-success text-white"
                   : active
-                  ? "bg-jaika-gold text-[#1c2e4a]"
+                  ? "bg-jaika-gold text-white"
                   : "bg-transparent text-black-600 border border-black-200"
               }`}
             >
@@ -295,7 +295,7 @@ export function PrimaryButton({
         disabled
           ? "opacity-40 cursor-not-allowed"
           : "hover:bg-jaika-gold-dark hover:text-white active:bg-jaika-gold-dark"
-      } bg-jaika-gold text-[#1c2e4a] ${className}`}
+      } bg-jaika-gold text-white ${className}`}
     >
       {children}
     </button>
@@ -443,7 +443,7 @@ export function FileUpload({
           drag ? "border-jaika-gold bg-jaika-gold/5" : "border-black-200 bg-white"
         } border-dashed border`}
       >
-        <div className="w-10 h-10 flex items-center justify-center bg-[#1c2e4a] text-jaika-gold rounded-full">
+        <div className="w-10 h-10 flex items-center justify-center bg-[#1c2e4a] text-jaika-mint rounded-full">
           <Camera size={18} />
         </div>
         <span className="text-sm font-semibold text-black-700">

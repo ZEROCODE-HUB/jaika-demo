@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarDays, CheckCircle2, Clock3, Wallet } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, Clock3, Wallet } from "lucide-react";
+import { ModalDialog } from "@/components/modal-dialog";
 import {
   Badge,
   BtnPrimary,
@@ -29,8 +31,21 @@ function fechaCuota(fecha: string) {
   }).format(new Date(fecha));
 }
 
+function EstadoCuota({ estado }: { estado: "pagada" | "pendiente" }) {
+  return estado === "pagada" ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-semibold text-success">
+      <CheckCircle2 size={11} /> Pagada
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-plata-100 px-2.5 py-1 text-[11px] font-semibold text-black-400">
+      Pendiente
+    </span>
+  );
+}
+
 function CronogramaPage() {
   const { solicitud, preaprobacion, etapa } = useJaikaDemo();
+  const [verTodo, setVerTodo] = useState(false);
   const moneda = solicitud?.moneda ?? "USD";
   const cronograma = calcularCronograma(solicitud, etapa, preaprobacion);
   const credito = solicitud
@@ -112,7 +127,71 @@ function CronogramaPage() {
             </div>
           </div>
 
-          <Card className="overflow-hidden p-0">
+          {/* Movil: resumen de las proximas cuotas + cronograma completo en un popup */}
+          <Card className="p-0 md:hidden">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <h2 className="font-semibold text-black-800">Próximas cuotas</h2>
+              <span className="text-xs text-black-400">
+                {pagadas} de {cronograma.length} pagadas
+              </span>
+            </div>
+            <ul className="divide-y divide-line">
+              {cronograma
+                .filter((c) => c.estado === "pendiente")
+                .slice(0, 3)
+                .map((item) => (
+                  <li key={item.numero} className="flex items-center justify-between gap-3 px-5 py-3">
+                    <div>
+                      <div className="text-sm font-semibold text-black-800">
+                        Cuota {item.numero}
+                      </div>
+                      <div className="text-xs text-black-400">{fechaCuota(item.vencimiento)}</div>
+                    </div>
+                    <div className="text-right font-mono text-sm text-black-800">
+                      {formatearMonto(item.monto, moneda)}
+                    </div>
+                  </li>
+                ))}
+            </ul>
+            <div className="p-4">
+              <button
+                type="button"
+                onClick={() => setVerTodo(true)}
+                className="flex h-11 w-full items-center justify-center gap-1 rounded-lg border border-line text-sm font-semibold text-black-700 hover:bg-canvas"
+              >
+                Ver cronograma completo ({cronograma.length} cuotas) <ChevronRight size={15} />
+              </button>
+            </div>
+          </Card>
+
+          <ModalDialog
+            open={verTodo}
+            onClose={() => setVerTodo(false)}
+            title="Cronograma completo"
+            description={`${cronograma.length} cuotas · Total estimado ${formatearMonto(total, moneda)}`}
+          >
+            <ul className="divide-y divide-line">
+              {cronograma.map((item) => (
+                <li key={item.numero} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-black-800">
+                      Cuota {String(item.numero).padStart(2, "0")}
+                    </div>
+                    <div className="text-xs text-black-400">{fechaCuota(item.vencimiento)}</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="font-mono text-sm text-black-800">
+                      {formatearMonto(item.monto, moneda)}
+                    </span>
+                    <EstadoCuota estado={item.estado} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </ModalDialog>
+
+          {/* Escritorio: tabla completa */}
+          <Card className="hidden overflow-hidden p-0 md:block">
             <div className="flex flex-col gap-1 border-b border-black-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-semibold text-black-800">Detalle de cuotas</h2>
               <span className="text-xs text-black-400">

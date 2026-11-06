@@ -45,7 +45,7 @@ export function PortalShell({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-plata-50">
+    <div className="min-h-screen flex flex-col bg-canvas">
       <header className="h-14 border-b border-black-100 bg-white flex items-center justify-between px-4 lg:px-6 shrink-0">
         <div className="flex items-center gap-3">
           <button
@@ -136,7 +136,7 @@ export function PortalShell({
               key={item.to}
               to={item.to}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-                active ? "text-jaika-gold font-semibold" : "text-black-400"
+                active ? "text-jaika-gold-dark font-semibold" : "text-black-400"
               }`}
             >
               <span className="relative">
@@ -301,7 +301,7 @@ function SidebarGroup({
         onClick={() => setOpen((v) => !v)}
         className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors ${
           containsActive
-            ? "text-jaika-gold font-semibold"
+            ? "text-jaika-mint font-semibold"
             : "text-white/80 hover:text-white hover:bg-navy-600"
         }`}
         aria-expanded={expanded}
@@ -336,8 +336,8 @@ export function PageHeader({ title, description, action }: { title: string; desc
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
       <div>
-        <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-black-800">{title}</h1>
-        {description && <p className="text-sm text-black-400 mt-1">{description}</p>}
+        <h1 className="font-display text-xl md:text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        {description && <p className="text-sm text-ink-muted mt-1">{description}</p>}
       </div>
       {action}
     </div>
@@ -345,7 +345,7 @@ export function PageHeader({ title, description, action }: { title: string; desc
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`bg-white border border-black-100 rounded-md p-6 ${className}`}>{children}</div>;
+  return <div className={`bg-white border border-line rounded-xl p-6 ${className}`}>{children}</div>;
 }
 
 export function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
@@ -362,7 +362,7 @@ export function BtnPrimary({ children, ...p }: React.ButtonHTMLAttributes<HTMLBu
   return (
     <button
       {...p}
-      className={`inline-flex items-center justify-center gap-2 h-10 px-5 rounded-sm bg-[#1c2e4a] text-white text-sm font-semibold cursor-pointer hover:bg-navy-600 active:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 ${p.className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg bg-jaika-gold-dark text-white text-sm font-semibold cursor-pointer hover:bg-[#176354] active:bg-[#114a3f] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 ${p.className ?? ""}`}
     >
       {children}
     </button>
@@ -373,7 +373,7 @@ export function BtnOutline({ children, ...p }: React.ButtonHTMLAttributes<HTMLBu
   return (
     <button
       {...p}
-      className={`inline-flex items-center justify-center gap-2 h-10 px-5 rounded-sm border border-black-200 bg-white text-black-700 text-sm font-semibold cursor-pointer hover:bg-black-50 active:bg-black-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 ${p.className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg border border-line bg-white text-black-700 text-sm font-semibold cursor-pointer hover:bg-black-50 active:bg-black-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 ${p.className ?? ""}`}
     >
       {children}
     </button>
@@ -384,7 +384,7 @@ export function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...p}
-      className={`w-full h-10 px-3 rounded-sm border border-black-100 bg-white text-sm text-black-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-100 placeholder:text-black-300 disabled:bg-plata-100 disabled:text-black-300 ${p.className ?? ""}`}
+      className={`w-full h-10 px-3 rounded-lg border border-line bg-white text-sm text-black-700 outline-none focus:border-jaika-gold-dark focus:ring-2 focus:ring-jaika-gold/20 placeholder:text-black-300 disabled:bg-plata-100 disabled:text-black-300 ${p.className ?? ""}`}
     />
   );
 }
@@ -397,12 +397,13 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
   );
 }
 
-export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "warn" | "danger" }) {
+export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "warn" | "danger" | "info" }) {
   const styles: Record<string, string> = {
     neutral: "bg-plata-200 text-black-600",
     success: "bg-success-bg text-success",
     warn: "bg-warning-bg text-warning",
     danger: "bg-error-bg text-error",
+    info: "bg-jaika-cyan/10 text-[#13708a]",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${styles[tone]}`}>

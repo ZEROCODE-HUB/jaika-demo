@@ -47,7 +47,7 @@ export function CreditTimeline({
                     completada
                       ? "border-success bg-success text-white"
                       : enCurso
-                        ? "border-jaika-gold bg-jaika-gold text-[#1c2e4a]"
+                        ? "border-jaika-gold bg-jaika-gold text-white"
                         : "border-black-200 bg-white text-black-400"
                   }`}
                 >
@@ -101,7 +101,7 @@ export function CreditTimeline({
                 completada
                   ? "border-success bg-success text-white"
                   : enCurso
-                    ? "border-jaika-gold bg-jaika-gold text-[#1c2e4a]"
+                    ? "border-jaika-gold bg-jaika-gold text-white"
                     : "border-black-200 bg-white text-black-400"
               }`}
             >

@@ -32,6 +32,12 @@
 
   --color-jaika-gold: var(--jaika-gold);
   --color-jaika-gold-dark: var(--jaika-gold-dark);
+  --color-jaika-mint: var(--jaika-mint);
+  --color-jaika-cyan: var(--jaika-cyan);
+  --color-canvas: var(--canvas);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
 
   --color-navy-700: var(--navy-700);
   --color-navy-600: var(--navy-600);
@@ -109,7 +115,7 @@
 :root {
   --radius: 0.5rem;
 
-  /* MOLI Brand Palette */
+  /* Paleta Jaika: navy institucional + verde aqua (accion) + cian (acento) */
   --black-900: #000000;
   --black-800: #1A1A1A;
   --black-700: #2E2E2E;
@@ -135,17 +141,24 @@
   --brand-primary: var(--red-500);
   --brand-soft: var(--red-50);
 
-  --jaika-gold: #B08D57;
-  --jaika-gold-dark: #8C6D3F;
+  /* Los tokens conservan el nombre "jaika-gold" por compatibilidad; ahora son verde aqua. */
+  --jaika-gold: #23957E;
+  --jaika-gold-dark: #1D7C69;
+  --jaika-mint: #7FDCC6;
+  --jaika-cyan: #1FA5C4;
+  --canvas: #F4F6F9;
+  --line: #D8DEE8;
+  --ink: #14213A;
+  --ink-muted: #64748B;
 
-  --navy-700: #1A235A;
-  --navy-600: #26327A;
-  --navy-500: #324595;
-  --navy-400: #5066B5;
-  --navy-300: #7B8ECC;
-  --navy-200: #A9B6E1;
-  --navy-100: #D4DBF3;
-  --navy-50: #EDF0FA;
+  --navy-700: #152337;
+  --navy-600: #2B4264;
+  --navy-500: #3C5A86;
+  --navy-400: #5377AC;
+  --navy-300: #839DC3;
+  --navy-200: #B2C3DC;
+  --navy-100: #DAE3F1;
+  --navy-50: #F0F4FA;
 
   --plata-600: #8A8A8A;
   --plata-500: #A8A8A8;
@@ -164,9 +177,9 @@
   --warning: #E37B1A;
   --warning-bg: #FFF3E0;
   --warning-border: #FFCC80;
-  --info: #324595;
-  --info-bg: #EDF0FA;
-  --info-border: #A9B6E1;
+  --info: #3C5A86;
+  --info-bg: #F0F4FA;
+  --info-border: #B2C3DC;
 
   --background: #FFFFFF;
   --foreground: var(--black-700);
@@ -177,7 +190,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: var(--black-700);
 
-  --primary: var(--red-500);
+  --primary: var(--jaika-gold-dark);
   --primary-foreground: #FFFFFF;
 
   --secondary: var(--navy-500);
@@ -192,9 +205,9 @@
   --destructive: var(--red-500);
   --destructive-foreground: #FFFFFF;
 
-  --border: var(--black-100);
-  --input: var(--black-100);
-  --ring: var(--navy-500);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--jaika-gold-dark);
 
   --sidebar: #FFFFFF;
   --sidebar-foreground: var(--black-700);
@@ -325,5 +338,14 @@
   .hero-bg-float,
   .hero-dashboard-float {
     animation: none;
+  }
+}
+
+/* Movil: inputs de 16px para que iOS no haga zoom al enfocarlos. */
+@media (max-width: 767.98px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }

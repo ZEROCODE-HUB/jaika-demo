@@ -138,19 +138,19 @@ function SiteHeader() {
         <nav
           className={`hidden lg:flex items-center gap-7 xl:gap-9 font-sans text-[0.95rem] font-medium ${text}`}
         >
-          <a href="#lineas" className="hover:text-jaika-gold transition-colors">
+          <a href="#lineas" className="hover:text-jaika-mint transition-colors">
             Créditos
           </a>
-          <a href="#como-funciona" className="hover:text-jaika-gold transition-colors">
+          <a href="#como-funciona" className="hover:text-jaika-mint transition-colors">
             Cómo funciona
           </a>
-          <a href="#simulador" className="hover:text-jaika-gold transition-colors">
+          <a href="#simulador" className="hover:text-jaika-mint transition-colors">
             Simulador
           </a>
-          <a href="#paises" className="hover:text-jaika-gold transition-colors">
+          <a href="#paises" className="hover:text-jaika-mint transition-colors">
             Países
           </a>
-          <a href="#preguntas" className="hover:text-jaika-gold transition-colors">
+          <a href="#preguntas" className="hover:text-jaika-mint transition-colors">
             Preguntas
           </a>
         </nav>
@@ -164,7 +164,7 @@ function SiteHeader() {
           </Link>
           <Link
             to="/registro"
-            className="inline-flex h-9 sm:h-10 items-center px-3 sm:px-4 rounded-sm text-sm font-semibold text-[#1c2e4a] bg-jaika-gold hover:bg-jaika-gold-dark hover:text-white transition-colors whitespace-nowrap"
+            className="inline-flex h-9 sm:h-10 items-center px-3 sm:px-4 rounded-sm text-sm font-semibold text-white bg-jaika-gold hover:bg-jaika-gold-dark hover:text-white transition-colors whitespace-nowrap"
           >
             Solicitar mi crédito
           </Link>
@@ -208,7 +208,7 @@ function Hero() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/registro"
-                className="inline-flex h-12 items-center gap-2 px-7 rounded-sm text-sm font-semibold text-[#1c2e4a] bg-jaika-gold hover:bg-jaika-gold-dark hover:text-white transition-colors"
+                className="inline-flex h-12 items-center gap-2 px-7 rounded-sm text-sm font-semibold text-white bg-jaika-gold hover:bg-jaika-gold-dark hover:text-white transition-colors"
               >
                 Solicitar mi crédito <ArrowRight size={16} />
               </Link>
@@ -229,12 +229,12 @@ function Hero() {
             <div className="bg-white/[0.07] backdrop-blur-[18px] border border-white/15 rounded-lg p-6 shadow-2xl">
               <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
-                  <p className="font-sans text-[0.65rem] tracking-[0.16em] uppercase text-jaika-gold">
+                  <p className="font-sans text-[0.65rem] tracking-[0.16em] uppercase text-jaika-mint">
                     Preaprobación referencial
                   </p>
                   <p className="mt-2 text-sm text-white/60">Tu ruta empieza con una simulación</p>
                 </div>
-                <BadgeCheck size={30} strokeWidth={1.4} className="text-jaika-gold" />
+                <BadgeCheck size={30} strokeWidth={1.4} className="text-jaika-mint" />
               </div>
               <div className="grid grid-cols-2 gap-px overflow-hidden rounded-sm bg-white/10 mt-5">
                 {[
@@ -277,7 +277,7 @@ function LedgerStrip() {
               key={label}
               className={`py-3 md:py-7 px-2 md:px-6 ${i > 0 ? "border-l border-white/10" : ""}`}
             >
-              <div className="font-sans text-[0.6rem] tracking-[0.14em] uppercase text-jaika-gold">
+              <div className="font-sans text-[0.6rem] tracking-[0.14em] uppercase text-jaika-mint">
                 {label}
               </div>
               <div className="mt-1 md:mt-2 font-sans text-[clamp(0.72rem,2.5vw,0.9rem)] tracking-wider text-white">
@@ -413,7 +413,7 @@ function ComoFunciona() {
               key={paso.titulo}
               className="relative border-t-2 border-t-jaika-gold bg-white p-6 sm:p-7 rounded-sm border border-black-100"
             >
-              <div className="font-display text-3xl font-semibold text-jaika-gold">
+              <div className="font-display text-3xl font-semibold text-jaika-mint">
                 {String(i + 1).padStart(2, "0")}
               </div>
               <h3 className="mt-5 font-semibold text-[1.15rem] leading-tight text-black-800">
@@ -484,15 +484,15 @@ function Simulador() {
           </p>
           <div className="mt-8 space-y-4 text-sm text-white/65">
             <div className="flex gap-3">
-              <CheckCircle2 size={18} className="text-jaika-gold shrink-0 mt-0.5" />
+              <CheckCircle2 size={18} className="text-jaika-mint shrink-0 mt-0.5" />
               <span>Sin costo y sin compromiso.</span>
             </div>
             <div className="flex gap-3">
-              <ShieldCheck size={18} className="text-jaika-gold shrink-0 mt-0.5" />
+              <ShieldCheck size={18} className="text-jaika-mint shrink-0 mt-0.5" />
               <span>La cuota final se confirma al aprobar tu solicitud.</span>
             </div>
             <div className="flex gap-3">
-              <Landmark size={18} className="text-jaika-gold shrink-0 mt-0.5" />
+              <Landmark size={18} className="text-jaika-mint shrink-0 mt-0.5" />
               <span>Operación respaldada por fideicomiso.</span>
             </div>
           </div>
@@ -585,7 +585,7 @@ function Simulador() {
               <div className="text-[11px] uppercase tracking-wide text-white/60">
                 Cuota estimada
               </div>
-              <div className="mt-1 font-display text-xl font-semibold text-jaika-gold">
+              <div className="mt-1 font-display text-xl font-semibold text-jaika-mint">
                 {formatearMonto(resultado.cuota)}
               </div>
             </div>
@@ -599,7 +599,7 @@ function Simulador() {
             <Link
               to="/registro"
               onClick={() => guardar({})}
-              className="inline-flex h-11 items-center justify-center gap-2 px-5 rounded-sm text-sm font-semibold text-[#1c2e4a] bg-jaika-gold hover:bg-jaika-gold-dark hover:text-white transition-colors"
+              className="inline-flex h-11 items-center justify-center gap-2 px-5 rounded-sm text-sm font-semibold text-white bg-jaika-gold hover:bg-jaika-gold-dark hover:text-white transition-colors"
             >
               Solicitar mi crédito <ArrowRight size={15} />
             </Link>
@@ -693,7 +693,7 @@ function Paises() {
                 key={pais.nombre}
                 className="flex items-center gap-3 border border-black-100 rounded-sm p-4 bg-plata-50/60"
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#1c2e4a] text-xs font-semibold text-jaika-gold">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#1c2e4a] text-xs font-semibold text-jaika-mint">
                   {pais.codigo}
                 </span>
                 <div>
@@ -777,12 +777,12 @@ function SiteFooter() {
           <p className="mt-6 text-sm text-white/50 leading-relaxed max-w-[260px]">
             © 2026 Jaika. Todos los derechos reservados.
           </p>
-          <p className="mt-4 font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-gold">
+          <p className="mt-4 font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-mint">
             Créditos con respaldo
           </p>
         </div>
         <div>
-          <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-gold">
+          <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-mint">
             Enlaces útiles
           </div>
           <ul className="mt-5 space-y-3 font-sans text-sm text-white/70">
@@ -809,7 +809,7 @@ function SiteFooter() {
           </ul>
         </div>
         <div>
-          <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-gold">
+          <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-mint">
             Contacto
           </div>
           <ul className="mt-5 space-y-3 font-sans text-sm text-white/70">
@@ -821,11 +821,11 @@ function SiteFooter() {
           </ul>
         </div>
         <div>
-          <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-gold">
+          <div className="font-sans text-[0.65rem] tracking-[0.14em] uppercase text-jaika-mint">
             Respaldo
           </div>
           <div className="mt-5 border border-white/10 p-4 bg-white/5">
-            <div className="font-sans text-[0.6rem] tracking-[0.14em] uppercase text-jaika-gold">
+            <div className="font-sans text-[0.6rem] tracking-[0.14em] uppercase text-jaika-mint">
               Fideicomiso
             </div>
             <div className="mt-1.5 font-sans text-sm text-white/80 leading-relaxed">

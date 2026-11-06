@@ -118,7 +118,7 @@ function PreaprobacionPage() {
               className="absolute -right-24 -top-28 h-72 w-72 rounded-full bg-jaika-gold/20 blur-3xl"
             />
             <div className="relative">
-              <CheckCircle2 size={36} className="text-jaika-gold" />
+              <CheckCircle2 size={36} className="text-jaika-mint" />
               <h2 className="mt-4 font-display text-3xl font-semibold">
                 {formatearMonto(solicitud.valor, moneda)}
               </h2>
@@ -132,7 +132,7 @@ function PreaprobacionPage() {
               <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-5 text-sm">
                 <div>
                   <div className="text-white/50">Tasa referencial</div>
-                  <div className="mt-1 text-xl font-semibold text-jaika-gold">
+                  <div className="mt-1 text-xl font-semibold text-jaika-mint">
                     {credito.tasaAnual.toFixed(1)}%
                   </div>
                 </div>
@@ -163,7 +163,7 @@ function PreaprobacionPage() {
 
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link to="/app/seguimiento">
-                  <BtnPrimary className="bg-jaika-gold text-[#1c2e4a] hover:bg-jaika-gold-dark hover:text-white">
+                  <BtnPrimary className="bg-jaika-gold text-white hover:bg-jaika-gold-dark hover:text-white">
                     Ver seguimiento <ArrowRight size={15} />
                   </BtnPrimary>
                 </Link>
@@ -224,7 +224,7 @@ function PreaprobacionPage() {
 
           <div className="mt-5 rounded-sm bg-[#1c2e4a] p-6 text-white">
             <div className="text-xs uppercase tracking-wide text-white/60">Monto a acreditar</div>
-            <div className="mt-1 font-display text-3xl font-semibold text-jaika-gold">
+            <div className="mt-1 font-display text-3xl font-semibold text-jaika-mint">
               {formatearMonto(credito?.inicial ?? 0, moneda)}
             </div>
             {referencia && (

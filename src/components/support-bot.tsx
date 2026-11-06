@@ -117,7 +117,7 @@ export function SupportBot() {
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#1c2e4a] text-jaika-gold shadow-lg transition hover:opacity-90"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#1c2e4a] text-jaika-mint shadow-lg transition hover:opacity-90"
         aria-label="Asistente virtual"
       >
         {open ? <X size={22} /> : <MessageCircle size={22} />}
@@ -128,7 +128,7 @@ export function SupportBot() {
           <div className="flex items-center justify-between border-b border-black-100 bg-plata-50 px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1c2e4a]">
-                <Bot size={16} className="text-jaika-gold" />
+                <Bot size={16} className="text-jaika-mint" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-black-800">Asistente Jaika</div>

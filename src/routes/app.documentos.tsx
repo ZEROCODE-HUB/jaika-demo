@@ -131,14 +131,15 @@ function DocumentosPage() {
         ? `Vendedor: ${solicitud.datosBien.vendedor}`
         : "Pendiente de generar",
       icono: ScrollText,
+      // Segun la reunion: la minuta viene en el documento de preaprobacion y se firma en notaria.
       fecha:
-        etapaIndex(etapa) >= etapaIndex("registros_publicos")
-          ? notificaciones.find((n) => n.etapa === "registros_publicos")?.fecha ?? fechaBase
+        etapaIndex(etapa) >= etapaIndex("preaprobado")
+          ? notificaciones.find((n) => n.etapa === "preaprobado")?.fecha ?? fechaBase
           : null,
       estado:
         etapaIndex(etapa) >= etapaIndex("notaria")
           ? "firmado"
-          : estadoDocumento(etapa, "registros_publicos"),
+          : estadoDocumento(etapa, "preaprobado"),
       lineas: solicitud
         ? [
             `Bien: ${solicitud.tipoBien}`,

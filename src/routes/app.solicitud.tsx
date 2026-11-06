@@ -8,6 +8,7 @@ import {
   HardHat,
   Home,
   Landmark,
+  Plus,
   Store,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ import {
   valorMinimoBien,
   type DatosBien,
   type TipoBien,
+  etapaIndex,
 } from "@/lib/jaika-demo-store";
 
 export const Route = createFileRoute("/app/solicitud")({
@@ -57,6 +59,59 @@ const ICONOS_BIEN: Record<TipoBien, typeof Home> = {
 };
 
 function SolicitudPage() {
+  const etapa = useJaikaDemo((s) => s.etapa);
+  const solicitud = useJaikaDemo((s) => s.solicitud);
+  const creditoActivoId = useJaikaDemo((s) => s.creditoActivoId);
+  const nuevaSolicitud = useJaikaDemo((s) => s.nuevaSolicitud);
+
+  // Con un credito ya preaprobado (o mas adelante) no se edita: se ofrece pedir uno nuevo.
+  if (etapaIndex(etapa) >= etapaIndex("preaprobado") && solicitud) {
+    return (
+      <>
+        <PageHeader
+          title="Solicitud de crédito"
+          description="Tu crédito actual sigue su curso. Puedes solicitar otro cuando quieras."
+          action={<Badge tone={ETAPA_TONE[etapa]}>{ETAPA_LABEL[etapa]}</Badge>}
+        />
+        <Card className="mx-auto max-w-2xl">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-success" />
+            <div>
+              <h2 className="text-lg font-semibold text-black-800">Tienes un crédito en curso</h2>
+              <p className="mt-1 text-sm text-black-500">
+                {solicitud.tipoBien} · {formatearMonto(solicitud.valor, solicitud.moneda)} ·{" "}
+                {solicitud.plazo} meses · Etapa: {ETAPA_LABEL[etapa]}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <BtnPrimary
+              onClick={() => {
+                nuevaSolicitud();
+                toast.success("Tu crédito actual quedó guardado en Mis créditos.");
+              }}
+            >
+              <Plus size={15} /> Solicitar un nuevo crédito
+            </BtnPrimary>
+            <Link to="/app/seguimiento">
+              <BtnOutline className="w-full">
+                Ver seguimiento <ArrowRight size={14} />
+              </BtnOutline>
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-black-400">
+            Cada crédito se gestiona por separado, con su propio 10% inicial, preaprobación y
+            etapas. Puedes cambiar entre ellos desde Inicio.
+          </p>
+        </Card>
+      </>
+    );
+  }
+
+  return <SolicitudForm key={creditoActivoId} />;
+}
+
+function SolicitudForm() {
   const nav = useNavigate();
   const {
     perfil,
@@ -235,7 +290,7 @@ function SolicitudPage() {
                     >
                       <span
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${
-                          activo ? "bg-jaika-gold text-[#1c2e4a]" : "bg-plata-100 text-black-500"
+                          activo ? "bg-jaika-gold text-white" : "bg-plata-100 text-black-500"
                         }`}
                       >
                         <Icon size={19} />
@@ -331,7 +386,7 @@ function SolicitudPage() {
                 </div>
                 <div className="bg-[#1c2e4a] p-4 text-white">
                   <div className="text-[11px] uppercase tracking-wide text-white/60">Cuota estimada</div>
-                  <div className="mt-1 font-display text-lg font-semibold text-jaika-gold">
+                  <div className="mt-1 font-display text-lg font-semibold text-jaika-mint">
                     {formatearMonto(resultado.cuota, moneda)}
                   </div>
                 </div>
