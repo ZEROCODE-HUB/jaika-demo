@@ -1,5 +1,13 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Menu, LogOut, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
+import {
+  Menu,
+  LogOut,
+  MoreHorizontal,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { JaikaLogo } from "./jaika-logo";
 import { useDemoMode } from "@/contexts/demo-mode";
@@ -8,8 +16,7 @@ export type NavLeaf = { to: string; label: string; icon: LucideIcon; badge?: num
 export type NavGroup = { label: string; icon: LucideIcon; items: NavLeaf[] };
 export type NavItem = NavLeaf | NavGroup;
 
-const isGroup = (item: NavItem): item is NavGroup =>
-  (item as NavGroup).items !== undefined;
+const isGroup = (item: NavItem): item is NavGroup => (item as NavGroup).items !== undefined;
 
 const flattenLeaves = (nav: NavItem[]): NavLeaf[] =>
   nav.flatMap((i) => (isGroup(i) ? i.items : [i]));
@@ -66,7 +73,14 @@ export function PortalShell({
             <span className="text-sm font-semibold text-black-700">{userName ?? "Usuario"}</span>
           </div>
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold bg-jaika-gold/15 text-jaika-gold-dark">
-            {userName ? userName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "U"}
+            {userName
+              ? userName
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()
+              : "U"}
           </div>
           <button
             onClick={onLogout}
@@ -127,7 +141,7 @@ export function PortalShell({
         </main>
       </div>
 
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 bg-white border-t border-black-100 flex items-stretch z-30">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 bg-[#1c2e4a] border-t border-white/10 flex items-stretch z-30 shadow-[0_-10px_30px_-14px_rgba(7,15,28,.55)]">
         {mainNav.map((item) => {
           const active = path === item.to;
           const Icon = item.icon;
@@ -135,14 +149,15 @@ export function PortalShell({
             <Link
               key={item.to}
               to={item.to}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] ${
-                active ? "text-jaika-gold-dark font-semibold" : "text-black-400"
+              className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] ${
+                active ? "text-jaika-mint font-semibold" : "text-white/55"
               }`}
             >
+              {active && <span className="absolute top-0 h-0.5 w-6 rounded-full bg-jaika-mint" />}
               <span className="relative">
-                <Icon size={20} strokeWidth={1.75} />
+                <Icon size={20} strokeWidth={active ? 2.25 : 1.75} />
                 {!!item.badge && (
-                  <span className="absolute -right-2 -top-1 min-w-4 h-4 rounded-full bg-jaika-gold-dark px-1 text-[9px] leading-4 text-white">
+                  <span className="absolute -right-2 -top-1 min-w-4 h-4 rounded-full bg-jaika-gold px-1 text-[9px] leading-4 text-white">
                     {item.badge > 9 ? "9+" : item.badge}
                   </span>
                 )}
@@ -154,7 +169,7 @@ export function PortalShell({
         {more.length > 0 && (
           <button
             onClick={() => setOpen(true)}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] text-black-400"
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] text-white/55"
           >
             <MoreHorizontal size={20} strokeWidth={1.75} />
             <span>Más</span>
@@ -198,7 +213,7 @@ function SidebarNav({
               onNavigate={onNavigate}
               collapsed
             />
-          )
+          ),
         )}
       </>
     );
@@ -208,10 +223,20 @@ function SidebarNav({
     <>
       {nav.map((item, idx) =>
         isGroup(item) ? (
-          <SidebarGroup key={`g-${idx}-${item.label}`} group={item} path={path} onNavigate={onNavigate} />
+          <SidebarGroup
+            key={`g-${idx}-${item.label}`}
+            group={item}
+            path={path}
+            onNavigate={onNavigate}
+          />
         ) : (
-          <SidebarLink key={item.to} item={item} active={path === item.to} onNavigate={onNavigate} />
-        )
+          <SidebarLink
+            key={item.to}
+            item={item}
+            active={path === item.to}
+            onNavigate={onNavigate}
+          />
+        ),
       )}
     </>
   );
@@ -308,10 +333,7 @@ function SidebarGroup({
       >
         <Icon size={18} strokeWidth={1.75} />
         <span className="flex-1 text-left">{group.label}</span>
-        <ChevronDown
-          size={14}
-          className={`transition-transform ${expanded ? "rotate-180" : ""}`}
-        />
+        <ChevronDown size={14} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
       {expanded && (
         <div className="mt-0.5">
@@ -332,11 +354,21 @@ function SidebarGroup({
 
 /* Utility primitives used by pages */
 
-export function PageHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
       <div>
-        <h1 className="font-display text-xl md:text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        <h1 className="font-display text-xl md:text-2xl font-semibold tracking-tight text-ink">
+          {title}
+        </h1>
         {description && <p className="text-sm text-ink-muted mt-1">{description}</p>}
       </div>
       {action}
@@ -345,14 +377,20 @@ export function PageHeader({ title, description, action }: { title: string; desc
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`bg-white border border-line rounded-xl p-6 ${className}`}>{children}</div>;
+  return (
+    <div className={`bg-white border border-line rounded-2xl p-6 shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 export function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <Card>
       <div className="text-xs uppercase tracking-wide text-black-400">{label}</div>
-      <div className="font-display text-2xl md:text-3xl font-semibold mt-1 text-black-800 tabular-nums">{value}</div>
+      <div className="font-display text-2xl md:text-3xl font-semibold mt-1 text-black-800 tabular-nums">
+        {value}
+      </div>
       {sub && <div className="text-xs text-black-400 mt-1">{sub}</div>}
     </Card>
   );
@@ -397,7 +435,13 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
   );
 }
 
-export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "warn" | "danger" | "info" }) {
+export function Badge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "success" | "warn" | "danger" | "info";
+}) {
   const styles: Record<string, string> = {
     neutral: "bg-plata-200 text-black-600",
     success: "bg-success-bg text-success",
@@ -406,7 +450,9 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
     info: "bg-jaika-cyan/10 text-[#13708a]",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${styles[tone]}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${styles[tone]}`}
+    >
       {children}
     </span>
   );

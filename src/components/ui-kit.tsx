@@ -19,7 +19,7 @@ export function SectionCard({
   bodyClassName?: string;
 }) {
   return (
-    <section className={`rounded-xl border border-line bg-white ${className}`}>
+    <section className={`rounded-2xl border border-line bg-white shadow-sm ${className}`}>
       {(title || action) && (
         <header className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-5 pb-3 pt-4">
           <div>
@@ -35,9 +35,17 @@ export function SectionCard({
 }
 
 /** Indicador compacto (KPI). */
-export function KpiTile({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
+export function KpiTile({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: ReactNode;
+  sub?: ReactNode;
+}) {
   return (
-    <div className="rounded-xl border border-line bg-white p-4">
+    <div className="rounded-2xl border border-line bg-white p-4 shadow-sm">
       <div className="text-[11px] uppercase tracking-wide text-ink-muted">{label}</div>
       <div className="mt-1 font-display text-xl font-semibold tabular-nums text-ink md:text-2xl">
         {value}
@@ -73,7 +81,9 @@ export function QuickLink({
       to={to}
       className="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-3 transition-colors hover:bg-canvas"
     >
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${TONOS[tone]}`}>
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${TONOS[tone]}`}
+      >
         <Icon size={17} />
       </span>
       <span className="min-w-0 flex-1 text-sm text-ink">{label}</span>

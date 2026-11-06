@@ -38,13 +38,13 @@ export function ModalDialog({
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-4">
+      <div className="fixed inset-0 z-[70] flex items-end justify-center px-4 pb-4 pt-10 sm:items-center sm:p-4">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <div
           role="dialog"
           aria-modal="true"
           aria-label={title}
-          className={`relative flex max-h-[88vh] w-full flex-col rounded-t-2xl bg-white shadow-xl sm:rounded-xl ${w}`}
+          className={`relative flex max-h-[85dvh] w-full flex-col rounded-2xl bg-white shadow-xl sm:max-h-[88vh] sm:rounded-xl ${w}`}
         >
           <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-black-100 sm:hidden" />
           <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
