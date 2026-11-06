@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { JaikaLogo } from "@/components/jaika-logo";
 import hero17Src from "@/assets/hero-17.jpg";
-import ogImageSrc from "@/assets/miniaturafinal.png";
 import {
   PLAZOS,
   TIPOS_BIEN,
@@ -48,11 +47,17 @@ export const Route = createFileRoute("/")({
         content:
           "Créditos respaldados por fideicomiso para vivienda, vehículo, transporte, construcción y negocio.",
       },
-      { property: "og:image", content: ogImageSrc },
-      { property: "og:image:width", content: "1901" },
-      { property: "og:image:height", content: "904" },
+      { property: "og:image", content: "/og-jaika.jpg" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content: "Jaika — Tu crédito respaldado por fideicomiso",
+      },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: ogImageSrc },
+      { name: "twitter:image", content: "/og-jaika.jpg" },
+      { name: "twitter:image:alt", content: "Jaika — Tu crédito respaldado por fideicomiso" },
     ],
   }),
   component: Landing,

@@ -14,7 +14,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DemoModeProvider } from "../contexts/demo-mode";
 import { Toaster } from "@/components/ui/sonner";
-import ogImageSrc from "@/assets/miniatura.png";
 
 function NotFoundComponent() {
   return (
@@ -83,24 +82,45 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Jaika — Créditos respaldados por fideicomiso" },
-      { name: "description", content: "Jaika otorga créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios. Con tu 10% de inicial, tu crédito está preaprobado." },
+      {
+        name: "description",
+        content:
+          "Jaika otorga créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios. Con tu 10% de inicial, tu crédito está preaprobado.",
+      },
       { name: "author", content: "Jaika" },
       { property: "og:title", content: "Jaika — Créditos respaldados por fideicomiso" },
-      { property: "og:description", content: "Créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios." },
+      {
+        property: "og:description",
+        content:
+          "Créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "Jaika — Créditos respaldados por fideicomiso" },
-      { name: "twitter:description", content: "Créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios." },
-      { property: "og:image", content: ogImageSrc },
-      { property: "og:image:width", content: "1166" },
-      { property: "og:image:height", content: "552" },
-      { name: "twitter:image", content: ogImageSrc },
+      {
+        name: "twitter:description",
+        content:
+          "Créditos respaldados por fideicomiso para vivienda, vehículos, transporte, construcción y negocios.",
+      },
+      { property: "og:image", content: "/og-jaika.jpg" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content: "Jaika — Tu crédito respaldado por fideicomiso",
+      },
+      { name: "twitter:image", content: "/og-jaika.jpg" },
+      { name: "twitter:image:alt", content: "Jaika — Tu crédito respaldado por fideicomiso" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
